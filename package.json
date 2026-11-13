@@ -1,0 +1,10 @@
+{
+  "name": "presupuesto-master",
+  "version": "2.0.0-dev",
+  "private": true,
+  "description": "Generador de la plantilla Presupuesto Master 2 para Google Sheets",
+  "author": "Juanprey15",
+  "devDependencies": {
+    "@google/clasp": "3.4.1"
+  }
+}
