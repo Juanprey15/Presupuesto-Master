@@ -1,0 +1,32 @@
+# Datos reales (finanzas personales): nunca se versionan
+data/raw/
+
+# Secretos y entorno
+.env
+.env.*
+!.env.example
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Asistentes de IA
+.claude/
+CLAUDE.md
+superpowers/
+.superpowers/
+docs/superpowers/
+docs/plans/
+.playwright-mcp/
+
+# Temporales
+scratch/
+
+# macOS
+.DS_Store
+
+# Node y clasp
+node_modules/
+.clasprc.json
