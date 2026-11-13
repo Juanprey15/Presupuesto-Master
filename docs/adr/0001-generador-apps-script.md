@@ -28,8 +28,10 @@ cambió entre versiones y publicar las ofertas desde una sola fuente.
 ## Decisión
 
 Generador en Apps Script, desarrollado localmente y subido con `clasp` (versión fijada en
-`package.json`). Cada ejecución produce una planilla nueva de la versión indicada. El código de la
-premium se agrega a la copia premium como proyecto aparte; la básica sale sin código.
+`package.json`). Cada ejecución produce una planilla nueva de la versión indicada. Ninguna oferta
+lleva código: la básica y la premium salen solo con fórmulas (la premium agrega pestañas de
+planificación), así que el comprador nunca ve una pantalla de autorización. La única autorización es la
+del autor, una vez, para ejecutar el generador.
 
 ## Por qué
 
