@@ -11,6 +11,7 @@ function generarPlantilla(opciones) {
   ss.deleteSheet(porDefecto);
   construirConfiguracion(ss, datos);
   construirListas(ss);
+  construirDatos(ss, datos);
   ss.getSheetByName(CONFIG.HOJAS.listas).hideSheet();
   return ss.getUrl();
 }

@@ -68,7 +68,7 @@ function construirConfiguracion(ss, datos) {
       .setBackground(CONFIG.PALETA.deep).setFontColor(CONFIG.PALETA.ground).setFontWeight('bold');
     t.claves.forEach((clave, i) => formatearColumnaConfig(sh.getRange(FILA_DATOS_CONFIG, t.columna + i, alto, 1), clave));
     if (t.filas.length) {
-      const valores = t.filas.map((f) => f.map((v, i) => (t.claves[i] === 'mes' ? fechaDeMes(v) : v)));
+      const valores = t.filas.map((f) => f.map((v, i) => (t.claves[i] === 'mes' ? aFecha(v) : v)));
       sh.getRange(FILA_DATOS_CONFIG, t.columna, valores.length, ancho).setValues(valores);
     }
     for (const r of t.rangos) {
@@ -89,7 +89,7 @@ function formatearColumnaConfig(rango, clave) {
 }
 
 /** 'AAAA-MM' o 'AAAA-MM-DD' -> Date local (día 1 si no trae día). */
-function fechaDeMes(texto) {
+function aFecha(texto) {
   const [a, m, d] = texto.split('-').map(Number);
   return new Date(a, m - 1, d || 1);
 }
