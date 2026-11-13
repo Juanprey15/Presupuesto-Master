@@ -14,6 +14,7 @@ este repo.
 - [Stack](#stack)
 - [Requisitos](#requisitos)
 - [Instalación](#instalación)
+- [Uso](#uso)
 - [Estructura](#estructura)
 
 ## Stack
@@ -34,9 +35,22 @@ npm install
 npx clasp login
 ```
 
+## Uso
+
+```bash
+npm test            # pruebas locales (Node)
+npx clasp push      # sube src/ al proyecto de Apps Script
+npx clasp open-script
+```
+
+En el editor de Apps Script se ejecuta `generarPlantilla`: crea una planilla nueva en el Drive y
+registra su URL. La planilla generada no contiene código.
+
 ## Estructura
 
 | Carpeta | Contenido |
 |---|---|
+| `src/` | Generador en Apps Script (se sube con `clasp`) |
+| `tests/` | Pruebas en Node |
 | `docs/adr/` | Decisiones de arquitectura |
 | `data/raw/` | Datos de origen locales (no se versionan) |
