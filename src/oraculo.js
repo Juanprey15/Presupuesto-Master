@@ -45,6 +45,60 @@ function cuotasDe(datos, tarjeta, mes) {
     }, 0);
 }
 
+function ingresosDe(datos, mes) {
+  return datos.ingresos
+    .filter((i) => i.monto != null && mesDeFecha(i.fecha) === mes)
+    .reduce((s, i) => s + aMonedaPrincipal(datos, i.monto, i.moneda, mes), 0);
+}
+
+/** Mes 'AAAA-MM' desplazado k meses (k negativo hacia atrás). */
+function sumarMeses(mes, k) {
+  const n = Number(mes.slice(0, 4)) * 12 + Number(mes.slice(5, 7)) - 1 + k;
+  return `${Math.floor(n / 12)}-${String((n % 12) + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Gastos hormiga del mes. Fuente: Movimientos (sin migrados ni filas sin monto) y Compras con tarjeta.
+ * - Subcategoría marcada: todas sus compras del mes, sin tope de monto (tipo 'hormiga').
+ * - No marcada: 'posible' si en cada uno de los últimos `mesesSeguidos` meses tuvo al menos `comprasPorMes`
+ *   compras de hasta `montoMaximo`; cuenta solo esas compras chicas.
+ * Proyección anual: promedio mensual en la ventana de `mesesSeguidos` meses (sin contar meses anteriores
+ * al primer movimiento) x 12. `total` y `pctIngreso` suman solo las marcadas.
+ */
+function calcularHormiga(datos, mes) {
+  const { subcategorias, hormiga } = datos.config;
+  const { montoMaximo, comprasPorMes, mesesSeguidos } = hormiga;
+  const nombre = (s) => `${s.categoria}${CONFIG.SEPARADOR}${s.subcategoria}`;
+  const marcadas = new Set(subcategorias.filter((s) => s.hormiga).map(nombre));
+  const validas = new Set(subcategorias.map(nombre));
+  const compras = [
+    ...datos.movimientos.filter((m) => m.origen !== 'migrado'),
+    ...datos.tarjeta.map((c) => ({ ...c, moneda: '' })),
+  ].filter((c) => c.monto != null && validas.has(c.subcategoria))
+    .map((c) => ({ sub: c.subcategoria, mes: mesDeFecha(c.fecha), monto: aMonedaPrincipal(datos, c.monto, c.moneda, mesDeFecha(c.fecha)) }));
+  const primerMes = datos.movimientos.map((m) => mesDeFecha(m.fecha)).sort()[0];
+  const ventana = Array.from({ length: mesesSeguidos }, (_, i) => sumarMeses(mes, -i));
+  const ventanaConDatos = ventana.filter((m) => primerMes && m >= primerMes);
+  const ingresos = ingresosDe(datos, mes);
+  const pct = (v) => (ingresos ? v / ingresos : 0);
+
+  const grupos = [];
+  for (const sub of new Set(compras.map((c) => c.sub))) {
+    const tipo = marcadas.has(sub) ? 'hormiga' : 'posible';
+    const cuentan = compras.filter((c) => c.sub === sub && (tipo === 'hormiga' || c.monto <= montoMaximo));
+    const delMes = (m) => cuentan.filter((c) => c.mes === m);
+    if (!delMes(mes).length) continue;
+    if (tipo === 'posible' && !(ventanaConDatos.length === mesesSeguidos && ventana.every((m) => delMes(m).length >= comprasPorMes))) continue;
+    const totalDe = (m) => delMes(m).reduce((s, c) => s + c.monto, 0);
+    const totalMes = totalDe(mes);
+    const promedio = ventanaConDatos.reduce((s, m) => s + totalDe(m), 0) / ventanaConDatos.length;
+    grupos.push({ subcategoria: sub, tipo, cantidad: delMes(mes).length, totalMes, pctIngreso: pct(totalMes), proyeccionAnual: promedio * 12 });
+  }
+  grupos.sort((a, b) => b.totalMes - a.totalMes);
+  const total = grupos.filter((g) => g.tipo === 'hormiga').reduce((s, g) => s + g.totalMes, 0);
+  return { total, pctIngreso: pct(total), grupos };
+}
+
 /** Fracción del mes transcurrida a la fecha 'hoy': 1 si el mes ya pasó, 0 si es futuro. */
 function fraccionDelMes(mes, hoy) {
   const mesHoy = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
@@ -97,9 +151,7 @@ function calcularPanel(datos, mes, hoy) {
   }
 
   const suma = (lista, clave) => lista.reduce((s, x) => s + x[clave], 0);
-  const ingresos = datos.ingresos
-    .filter((i) => i.monto != null && mesDeFecha(i.fecha) === mes)
-    .reduce((s, i) => s + aMonedaPrincipal(datos, i.monto, i.moneda, mes), 0);
+  const ingresos = ingresosDe(datos, mes);
   const presupuestado = suma(filas, 'presupuesto');
   const totalGastado = suma(filas, 'gastado');
   const tipos = metas.map(({ tipo, pct }) => {

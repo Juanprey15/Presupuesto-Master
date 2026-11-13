@@ -112,3 +112,37 @@ test('conversión a moneda principal', () => {
   assert.equal(aMonedaPrincipal(EJEMPLO, 5000, '', '2026-03'), 5000);
   assert.throws(() => aMonedaPrincipal(EJEMPLO, 1, 'USD', '2026-04'), /tasa/i);
 });
+
+const { calcularHormiga } = vm.runInContext('({ calcularHormiga })', ctx);
+const grupo = (h, sub) => h.grupos.find((g) => g.subcategoria === sub);
+
+test('hormiga de febrero: marcadas sin tope de monto, incluida la compra con tarjeta', () => {
+  const h = calcularHormiga(EJEMPLO, '2026-02');
+  // Ventana dic-feb limitada al primer mes con datos (enero): promedio de 2 meses x 12
+  assert.deepEqual(JSON.parse(JSON.stringify(h.grupos.map((g) => [g.subcategoria, g.tipo, g.cantidad, g.totalMes, g.proyeccionAnual]))), [
+    ['Antojos › Domicilios', 'hormiga', 1, 45000, 270000],
+    ['Antojos › Café', 'hormiga', 3, 24000, 288000],
+    ['Antojos › Snacks y golosinas', 'hormiga', 1, 12000, 72000],
+  ]);
+  assert.equal(h.total, 81000);
+  assert.equal(h.pctIngreso, 81000 / 6100000);
+  assert.equal(grupo(h, 'Antojos › Café').pctIngreso, 24000 / 6100000);
+});
+
+test('hormiga de marzo: el migrado no cuenta y aparece la posible hormiga de 3 meses', () => {
+  const h = calcularHormiga(EJEMPLO, '2026-03');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.grupos.map((g) => [g.subcategoria, g.tipo, g.cantidad, g.totalMes, g.proyeccionAnual]))), [
+    ['Antojos › Café', 'hormiga', 3, 24000, 288000],
+    ['Mercado › Panadería', 'posible', 3, 15000, 180000],
+  ]);
+  // Heladería cumple solo febrero y marzo: no aparece. El total solo suma las marcadas.
+  assert.equal(grupo(h, 'Salidas › Heladería'), undefined);
+  assert.equal(h.total, 24000);
+});
+
+test('hormiga de un mes sin datos ni ingresos: vacío y sin NaN', () => {
+  const h = calcularHormiga(EJEMPLO, '2026-04');
+  assert.equal(h.grupos.length, 0);
+  assert.equal(h.total, 0);
+  assert.equal(h.pctIngreso, 0);
+});
