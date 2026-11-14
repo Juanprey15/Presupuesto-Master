@@ -27,6 +27,8 @@ const CONFIG = {
     },
   },
   SEPARADOR: ' › ',
+  // Configuración regional con que se entrega la planilla (moneda, fechas y separadores que ve el usuario).
+  LOCALE: 'es_CO',
   /** Configuración inicial de una planilla nueva sin datos de ejemplo. */
   DEFECTOS: {
     personas: ['Persona 1', 'Persona 2'],

@@ -6,6 +6,8 @@ function generarPlantilla(opciones) {
   const { nombre = `Presupuesto Master ${CONFIG.VERSION}`, conEjemplo = false } = opciones || {};
   const datos = conEjemplo ? EJEMPLO : undefined;
   const ss = SpreadsheetApp.create(nombre);
+  // setFormula interpreta separadores según la configuración regional: se construye en en_US.
+  ss.setSpreadsheetLocale('en_US');
   const porDefecto = ss.getSheets()[0];
   Object.values(CONFIG.HOJAS).forEach((titulo, i) => ss.insertSheet(titulo, i));
   ss.deleteSheet(porDefecto);
@@ -13,6 +15,7 @@ function generarPlantilla(opciones) {
   construirListas(ss);
   construirDatos(ss, datos);
   ss.getSheetByName(CONFIG.HOJAS.listas).hideSheet();
+  ss.setSpreadsheetLocale(CONFIG.LOCALE);
   return ss.getUrl();
 }
 
