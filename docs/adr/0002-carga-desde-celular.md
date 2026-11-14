@@ -36,17 +36,25 @@ Los tiempos son estimaciones del autor, no cronometrados por carga.
   de cálculo une ambas pestañas. No duplica datos, pero todas las fórmulas del Panel, Hormiga y Tarjeta
   leen de esa capa y es más lenta con miles de filas.
 - **Formulario en Movimientos con una pregunta opcional de fecha.** Permite cargar compras atrasadas desde
-  el celular, a costa de una columna y una fórmula de fecha efectiva fuera de Movimientos.
+  el celular (la tirilla que se carga después), a costa de una columna calculada de fecha efectiva.
+- **Fecha obligatoria en el Formulario.** Más simple por dentro, pero suma dos o tres toques a cada carga,
+  aunque la compra sea del momento.
+- **Corregir la marca de tiempo en la hoja.** Sin cambios en el Formulario, pero incómodo desde el celular
+  y fácil de olvidar.
 
 ## Decisión
 
 La carga desde el celular es un Formulario de Google vinculado cuyas respuestas caen en la pestaña
 Movimientos. La carga directa en la hoja sigue disponible desde la computadora o la app.
 
-- La primera columna de Movimientos es la marca de tiempo del Formulario y hace de fecha de la compra. Una
-  compra de otro día se corrige editando esa celda.
+- La primera columna de Movimientos es la marca de tiempo del Formulario.
 - Las preguntas siguen el orden de las columnas de Movimientos: Monto, Moneda, Subcategoría, Pagó, Forma
-  de pago, Tienda, Para quién y Nota. Origen no es pregunta: lo agrega el generador a la derecha.
+  de pago, Tienda, Para quién, Nota y, al final, una pregunta opcional de fecha ("¿Fue otro día? Fecha de
+  la compra"). Origen no es pregunta: lo agrega el generador a la derecha.
+- La fecha de la compra es la de la pregunta opcional si está completa y, si no, el día de la marca de
+  tiempo. La calcula una columna "Fecha" con una sola fórmula `ARRAYFORMULA` en el encabezado, y es la que
+  leen todos los cálculos. Desde la computadora, una compra se carga escribiendo la fecha en la columna de
+  la pregunta opcional. Es la única fórmula permitida en una pestaña de datos.
 - Moneda es opcional; vacía cuenta como la moneda principal, igual que en el oráculo.
 - Subcategoría es un desplegable único `Categoría › Subcategoría`, sin dependencias entre preguntas.
 - Funciones permitidas en las fórmulas de la planilla: las de la tabla de prueba. Cualquier otra se
@@ -55,8 +63,8 @@ Movimientos. La carga directa en la hoja sigue disponible desde la computadora o
 ## Por qué
 
 Es la opción más rápida en el celular y la única que mantiene una sola tabla de movimientos sin una capa
-de cálculo intermedia. La marca de tiempo coincide con el objetivo de registrar en el momento de la
-compra, y la corrección de fechas atrasadas es un caso poco frecuente que se resuelve editando una celda.
+de cálculo intermedia. La pregunta opcional de fecha cubre el uso habitual de guardar la tirilla y cargarla
+después sin agregar toques a la carga del momento, que sigue tomando unos 10 segundos.
 
 ## Consecuencias
 
