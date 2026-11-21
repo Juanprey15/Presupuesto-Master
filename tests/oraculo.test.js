@@ -25,9 +25,9 @@ test('estados de febrero (mes pasado)', () => {
   const p = calcularPanel(EJEMPLO, '2026-02', PASADO);
   const estados = Object.fromEntries(p.filas.map((f) => [f.categoria, f.estado]));
   assert.deepEqual(estados, {
-    Arriendo: 'pagado', Servicios: 'pago parcial', Mercado: 'excedido', Antojos: 'en ritmo',
-    'Colegio Sol': 'pago parcial', Salidas: 'en ritmo', Ahorro: 'pagado', 'Pago Tarjeta Azul': 'pagado',
-    'Sin categoría': 'excedido',
+    Arriendo: 'Pagado', Servicios: 'Pago parcial', Mercado: 'Excedido', Antojos: 'En ritmo',
+    'Colegio Sol': 'Pago parcial', Salidas: 'En ritmo', Ahorro: 'Pagado', 'Pago Tarjeta Azul': 'Pagado',
+    'Sin categoría': 'Excedido',
   });
 });
 
@@ -40,14 +40,14 @@ test('ritmo del mes en curso: va rápido y en ritmo', () => {
   // 10 de marzo: 10/31 = 0,32 del mes. Mercado 500k/800k = 0,625 > 0,42 -> va rápido.
   // Antojos: el café migrado suma al gastado (32.000) pero el ritmo usa 24.000/100.000 = 0,24 -> en ritmo.
   const p = calcularPanel(EJEMPLO, '2026-03', new Date(2026, 2, 10));
-  assert.equal(fila(p, 'Mercado').estado, 'va rápido');
+  assert.equal(fila(p, 'Mercado').estado, 'Va rápido');
   assert.equal(fila(p, 'Antojos').gastado, 32000);
-  assert.equal(fila(p, 'Antojos').estado, 'en ritmo');
-  assert.equal(fila(p, 'Colegio Sol').estado, 'pendiente');
+  assert.equal(fila(p, 'Antojos').estado, 'En ritmo');
+  assert.equal(fila(p, 'Colegio Sol').estado, 'Pendiente');
 });
 
 test('una variable con solo movimientos migrados queda pagado', () => {
-  assert.equal(fila(calcularPanel(EJEMPLO, '2026-01', PASADO), 'Salidas').estado, 'pagado');
+  assert.equal(fila(calcularPanel(EJEMPLO, '2026-01', PASADO), 'Salidas').estado, 'Pagado');
 });
 
 test('el presupuesto base respeta la vigencia y el ajuste puntual', () => {
@@ -61,7 +61,7 @@ test('el presupuesto base respeta la vigencia y el ajuste puntual', () => {
 test('la categoría desactivada aparece en enero y no en marzo', () => {
   const enero = fila(calcularPanel(EJEMPLO, '2026-01', PASADO), 'Gimnasio');
   assert.equal(enero.gastado, 120000);
-  assert.equal(enero.estado, 'pagado');
+  assert.equal(enero.estado, 'Pagado');
   assert.equal(fila(calcularPanel(EJEMPLO, '2026-03', PASADO), 'Gimnasio'), undefined);
 });
 
@@ -87,7 +87,7 @@ test('un mes sin movimientos da ceros, pendientes y ningún NaN', () => {
   assert.equal(p.gastado, 0);
   assert.equal(p.disponible, 0);
   assert.equal(p.sinAsignar, -p.presupuestado);
-  assert.equal(fila(p, 'Arriendo').estado, 'pendiente');
+  assert.equal(fila(p, 'Arriendo').estado, 'Pendiente');
   assert.equal(fila(p, 'Sin categoría'), undefined);
   const numeros = [p.ingresos, p.presupuestado, p.gastado, p.disponible, p.sinAsignar,
     ...p.filas.flatMap((f) => [f.presupuesto, f.gastado, f.avance]), ...p.tipos.flatMap((t) => [t.gastado, t.pctIngreso])];

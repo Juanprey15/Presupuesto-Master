@@ -17,9 +17,9 @@ test('los nombres de pestañas son únicos y _Listas es oculta por nombre', () =
   assert.ok(CONFIG.HOJAS.listas.startsWith('_'));
 });
 
-test('la paleta es Juan Basic', () => {
+test('la paleta es Juan Basic más el color de alerta del boceto', () => {
   assert.deepEqual({ ...CONFIG.PALETA }, {
     ground: '#E8E8E3', surface: '#FFFFFF', ink: '#23262A', muted: '#565C61',
-    primary: '#3F5566', accent: '#6F7F3A', deep: '#222C33', line: '#D2D3CC',
+    primary: '#3F5566', accent: '#6F7F3A', deep: '#222C33', line: '#D2D3CC', warn: '#8A4B12',
   });
 });

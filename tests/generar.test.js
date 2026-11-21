@@ -4,7 +4,7 @@ const { cargar } = require('./cargar');
 
 /** Doble de SpreadsheetApp: todo método es encadenable; registra fórmulas y configuración regional. */
 function falsoSpreadsheetApp() {
-  const registro = { locale: 'es_ES', formulasPorLocale: [], localesFijados: [] };
+  const registro = { locale: 'es_ES', formulasPorLocale: [], localesFijados: [], zona: null };
   const numericos = { getMaxRows: 1000, getMaxColumns: 26, getLastRow: 1, getLastColumn: 1 };
   const objeto = new Proxy(function () {}, {
     get(_, prop) {
@@ -13,6 +13,7 @@ function falsoSpreadsheetApp() {
       if (prop === 'getSheets') return () => [objeto];
       if (prop === 'getUrl') return () => 'https://ejemplo';
       if (prop === 'setFormula') return (f) => { registro.formulasPorLocale.push(registro.locale); return objeto; };
+      if (prop === 'setSpreadsheetTimeZone') return (z) => { registro.zona = z; return objeto; };
       if (prop === 'setSpreadsheetLocale') return (l) => { registro.locale = l; registro.localesFijados.push(l); return objeto; };
       return () => objeto;
     },
@@ -22,7 +23,7 @@ function falsoSpreadsheetApp() {
 }
 
 function generarCon(opciones) {
-  const ctx = cargar('config.js', 'ejemplo.js', 'hojas/configuracion.js', 'hojas/listas.js', 'hojas/datos.js', 'generar.js');
+  const ctx = cargar('config.js', 'ejemplo.js', 'hojas/configuracion.js', 'hojas/listas.js', 'hojas/datos.js', 'oraculo.js', 'hojas/panel.js', 'generar.js');
   const { SpreadsheetApp, registro } = falsoSpreadsheetApp();
   ctx.SpreadsheetApp = SpreadsheetApp;
   ctx.generarPlantilla(opciones);
@@ -39,4 +40,9 @@ test('la planilla queda con la configuración regional del producto', () => {
   const { ctx, registro } = generarCon();
   assert.strictEqual(require('node:vm').runInContext('CONFIG.LOCALE', ctx), 'es_CO');
   assert.strictEqual(registro.locale, 'es_CO');
+});
+
+test('la planilla queda en la zona horaria del producto', () => {
+  const { registro } = generarCon();
+  assert.strictEqual(registro.zona, 'America/Bogota');
 });

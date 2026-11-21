@@ -108,13 +108,13 @@ function fraccionDelMes(mes, hoy) {
 }
 
 function estadoDe(comportamiento, presupuesto, gastado, gastadoRitmo, fraccion) {
-  if (gastado > presupuesto) return 'excedido';
+  if (gastado > presupuesto) return 'Excedido';
   if (comportamiento === 'fija') {
-    if (gastado === 0) return 'pendiente';
-    return gastado < presupuesto ? 'pago parcial' : 'pagado';
+    if (gastado === 0) return 'Pendiente';
+    return gastado < presupuesto ? 'Pago parcial' : 'Pagado';
   }
-  if (gastado > 0 && gastadoRitmo === 0) return 'pagado';
-  return presupuesto > 0 && gastadoRitmo / presupuesto > fraccion + TOLERANCIA_RITMO ? 'va rápido' : 'en ritmo';
+  if (gastado > 0 && gastadoRitmo === 0) return 'Pagado';
+  return presupuesto > 0 && gastadoRitmo / presupuesto > fraccion + TOLERANCIA_RITMO ? 'Va rápido' : 'En ritmo';
 }
 
 function calcularPanel(datos, mes, hoy) {

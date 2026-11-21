@@ -29,6 +29,7 @@ const CONFIG = {
   SEPARADOR: ' › ',
   // Configuración regional con que se entrega la planilla (moneda, fechas y separadores que ve el usuario).
   LOCALE: 'es_CO',
+  ZONA_HORARIA: 'America/Bogota',
   /** Configuración inicial de una planilla nueva sin datos de ejemplo. */
   DEFECTOS: {
     personas: ['Persona 1', 'Persona 2'],
@@ -64,5 +65,7 @@ const CONFIG = {
   PALETA: {
     ground: '#E8E8E3', surface: '#FFFFFF', ink: '#23262A', muted: '#565C61',
     primary: '#3F5566', accent: '#6F7F3A', deep: '#222C33', line: '#D2D3CC',
+    // Alerta (excedido, va rápido); siempre acompañada de texto.
+    warn: '#8A4B12',
   },
 };

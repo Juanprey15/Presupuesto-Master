@@ -53,8 +53,8 @@ test('las fórmulas de _Listas solo usan rangos definidos en Configuración', ()
   }
 });
 
-test('_Listas define las listas que usan las pestañas de datos', () => {
+test('_Listas define las listas de las pestañas de datos y el selector de mes', () => {
   const nombres = formulasListas().map((l) => l.nombre);
-  assert.deepEqual([...nombres].sort(), ['ListaCategorias', 'ListaFormasPago', 'ListaMonedas', 'ListaPersonas',
+  assert.deepEqual([...nombres].sort(), ['ListaCategorias', 'ListaFormasPago', 'ListaMeses', 'ListaMonedas', 'ListaPersonas',
     'ListaPersonasHogar', 'ListaSubcategorias', 'ListaTarjetas', 'ListaTiendas', 'MonedaPrincipal'].sort());
 });

@@ -8,12 +8,15 @@ function generarPlantilla(opciones) {
   const ss = SpreadsheetApp.create(nombre);
   // setFormula interpreta separadores según la configuración regional: se construye en en_US.
   ss.setSpreadsheetLocale('en_US');
+  ss.setSpreadsheetTimeZone(CONFIG.ZONA_HORARIA);
   const porDefecto = ss.getSheets()[0];
   Object.values(CONFIG.HOJAS).forEach((titulo, i) => ss.insertSheet(titulo, i));
   ss.deleteSheet(porDefecto);
   construirConfiguracion(ss, datos);
   construirListas(ss);
   construirDatos(ss, datos);
+  construirListas(ss, true);
+  construirPanel(ss);
   ss.getSheetByName(CONFIG.HOJAS.listas).hideSheet();
   ss.setSpreadsheetLocale(CONFIG.LOCALE);
   return ss.getUrl();

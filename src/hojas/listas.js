@@ -18,13 +18,23 @@ function formulasListas() {
     { nombre: 'ListaTarjetas', formula: `=${noVacios('CfgTarjetasTarjeta')}` },
     { nombre: 'ListaMonedas', formula: `=${noVacios('CfgMonedasMoneda')}` },
     { nombre: 'MonedaPrincipal', formula: '=IFERROR(INDEX(FILTER(CfgMonedasMoneda, CfgMonedasPrincipal=TRUE), 1), "COP")', unaCelda: true },
+    {
+      nombre: 'ListaMeses',
+      formula: '={"Mes actual"; IFERROR(SORT(UNIQUE(FILTER(ARRAYFORMULA(YEAR({MovFecha; IngFecha})&"-"&' +
+        'RIGHT("0"&MONTH({MovFecha; IngFecha}), 2)), ISNUMBER({MovFecha; IngFecha}))), 1, FALSE))}',
+      requiereDatos: true,
+    },
   ];
 }
 
-/** Escribe las fórmulas de _Listas (fila 1 nombre, fila 2 fórmula) y define un rango con nombre por lista. */
-function construirListas(ss) {
+/**
+ * Escribe las fórmulas de _Listas (fila 1 nombre, fila 2 fórmula) y define un rango con nombre por lista.
+ * Con `deDatos`, escribe solo las listas que leen pestañas de datos (se llama después de construirDatos).
+ */
+function construirListas(ss, deDatos = false) {
   const sh = ss.getSheetByName(CONFIG.HOJAS.listas);
   formulasListas().forEach((l, i) => {
+    if (Boolean(l.requiereDatos) !== deDatos) return;
     const columna = i + 1;
     sh.getRange(1, columna).setValue(l.nombre).setFontWeight('bold');
     sh.getRange(2, columna).setFormula(l.formula);
