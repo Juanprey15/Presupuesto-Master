@@ -1,165 +1,163 @@
 /**
- * Oráculo: cálculo independiente en JS de lo que deben mostrar el Panel y Hormiga.
- * Las fórmulas de la planilla se verifican contra estas funciones (verificar.js).
- * Fechas como texto 'AAAA-MM-DD' y meses como 'AAAA-MM'.
+ * Oráculo: las reglas del Panel calculadas en JavaScript sobre los datos de la hoja anual.
+ * Las fórmulas del Panel deben dar exactamente estos números (ver verificar.js).
  */
 
-const SIN_CATEGORIA = 'Sin categoría';
-const TOLERANCIA_RITMO = 0.1;
+const SIN_GRUPO = 'Sin grupo';
 
-function mesDeFecha(fecha) {
-  return fecha.slice(0, 7);
+const numero = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+const sumar = (xs) => xs.reduce((a, b) => a + b, 0);
+
+/** Valor de una celda de la grilla: k = 0 presupuesto, 1 real. */
+function celda(fila, i, k) {
+  const par = fila.meses[i];
+  return par && par[k] !== undefined ? par[k] : null;
 }
 
-/** Meses de diferencia entre dos meses 'AAAA-MM' (b - a). */
-function mesesEntre(a, b) {
-  const n = (m) => Number(m.slice(0, 4)) * 12 + Number(m.slice(5, 7));
-  return n(b) - n(a);
+/** Presupuesto tal como queda en la celda: lo escrito o, si no hay nada, la copia del mes anterior. */
+function presupuestoEnCelda(datos, fila, i) {
+  const escrito = celda(fila, i, 0);
+  if (escrito !== null) return escrito;
+  return i > 0 && datos.config.general.copiar ? presupuestoEnCelda(datos, fila, i - 1) : null;
 }
 
-function aMonedaPrincipal(datos, monto, moneda, mes) {
-  const principal = datos.config.monedas.find((m) => m.principal).moneda;
-  if (!moneda || moneda === principal) return monto;
-  const fila = datos.tasas.find((t) => t.mes === mes && t.moneda === moneda);
-  if (!fila) throw new Error(`Sin tasa para ${moneda} en ${mes}`);
-  return monto * fila.tasa;
-}
+const esPadre = (datos, g) => g.gasto !== '' && g.parteDe === '' && datos.gastos.some((o) => o.parteDe === g.gasto);
+const esParte = (datos, g) => g.parteDe !== '' && datos.gastos.some((o) => o.parteDe === '' && o.gasto === g.parteDe);
 
-/** Ajuste del mes si existe; si no, el base con mayor 'vigente desde' <= mes; si no, 0. Nunca incluye cuotas. */
-function presupuestoDe(datos, categoria, mes) {
-  const ajuste = datos.ajustes.find((a) => a.categoria === categoria && a.mes === mes);
-  if (ajuste) return ajuste.monto;
-  const vigentes = datos.presupuestoBase
-    .filter((p) => p.categoria === categoria && p.vigenteDesde <= mes)
-    .sort((a, b) => (a.vigenteDesde < b.vigenteDesde ? 1 : -1));
-  return vigentes.length ? vigentes[0].monto : 0;
-}
-
-/** Suma de cuotas de una tarjeta que caen en el mes: la cuota k (1..n) cae en el mes de compra + k. */
-function cuotasDe(datos, tarjeta, mes) {
-  return datos.tarjeta
-    .filter((c) => c.tarjeta === tarjeta && c.monto != null)
-    .reduce((suma, c) => {
-      const k = mesesEntre(mesDeFecha(c.fecha), mes);
-      return k >= 1 && k <= c.cuotas ? suma + c.monto / c.cuotas : suma;
-    }, 0);
-}
-
-function ingresosDe(datos, mes) {
-  return datos.ingresos
-    .filter((i) => i.monto != null && mesDeFecha(i.fecha) === mes)
-    .reduce((s, i) => s + aMonedaPrincipal(datos, i.monto, i.moneda, mes), 0);
-}
-
-/** Mes 'AAAA-MM' desplazado k meses (k negativo hacia atrás). */
-function sumarMeses(mes, k) {
-  const n = Number(mes.slice(0, 4)) * 12 + Number(mes.slice(5, 7)) - 1 + k;
-  return `${Math.floor(n / 12)}-${String((n % 12) + 1).padStart(2, '0')}`;
-}
-
-/**
- * Gastos hormiga del mes. Fuente: Movimientos (sin migrados ni filas sin monto) y Compras con tarjeta.
- * - Subcategoría marcada: todas sus compras del mes, sin tope de monto (tipo 'hormiga').
- * - No marcada: 'posible' si en cada uno de los últimos `mesesSeguidos` meses tuvo al menos `comprasPorMes`
- *   compras de hasta `montoMaximo`; cuenta solo esas compras chicas.
- * Proyección anual: promedio mensual en la ventana de `mesesSeguidos` meses (sin contar meses anteriores
- * al primer movimiento) x 12. `total` y `pctIngreso` suman solo las marcadas.
- */
-function calcularHormiga(datos, mes) {
-  const { subcategorias, hormiga } = datos.config;
-  const { montoMaximo, comprasPorMes, mesesSeguidos } = hormiga;
-  const nombre = (s) => `${s.categoria}${CONFIG.SEPARADOR}${s.subcategoria}`;
-  const marcadas = new Set(subcategorias.filter((s) => s.hormiga).map(nombre));
-  const validas = new Set(subcategorias.map(nombre));
-  const compras = [
-    ...datos.movimientos.filter((m) => m.origen !== 'migrado'),
-    ...datos.tarjeta.map((c) => ({ ...c, moneda: '' })),
-  ].filter((c) => c.monto != null && validas.has(c.subcategoria))
-    .map((c) => ({ sub: c.subcategoria, mes: mesDeFecha(c.fecha), monto: aMonedaPrincipal(datos, c.monto, c.moneda, mesDeFecha(c.fecha)) }));
-  const primerMes = datos.movimientos.map((m) => mesDeFecha(m.fecha)).sort()[0];
-  const ventana = Array.from({ length: mesesSeguidos }, (_, i) => sumarMeses(mes, -i));
-  const ventanaConDatos = ventana.filter((m) => primerMes && m >= primerMes);
-  const ingresos = ingresosDe(datos, mes);
-  const pct = (v) => (ingresos ? v / ingresos : 0);
-
-  const grupos = [];
-  for (const sub of new Set(compras.map((c) => c.sub))) {
-    const tipo = marcadas.has(sub) ? 'hormiga' : 'posible';
-    const cuentan = compras.filter((c) => c.sub === sub && (tipo === 'hormiga' || c.monto <= montoMaximo));
-    const delMes = (m) => cuentan.filter((c) => c.mes === m);
-    if (!delMes(mes).length) continue;
-    if (tipo === 'posible' && !(ventanaConDatos.length === mesesSeguidos && ventana.every((m) => delMes(m).length >= comprasPorMes))) continue;
-    const totalDe = (m) => delMes(m).reduce((s, c) => s + c.monto, 0);
-    const totalMes = totalDe(mes);
-    const promedio = ventanaConDatos.reduce((s, m) => s + totalDe(m), 0) / ventanaConDatos.length;
-    grupos.push({ subcategoria: sub, tipo, cantidad: delMes(mes).length, totalMes, pctIngreso: pct(totalMes), proyeccionAnual: promedio * 12 });
+/** Presupuesto del mes i de un gasto; el de un gasto con partes es la suma de sus partes. */
+function presupuestoEfectivo(datos, g, i) {
+  if (esPadre(datos, g)) {
+    return sumar(datos.gastos.filter((o) => o.parteDe === g.gasto).map((o) => presupuestoEfectivo(datos, o, i)));
   }
-  grupos.sort((a, b) => b.totalMes - a.totalMes);
-  const total = grupos.filter((g) => g.tipo === 'hormiga').reduce((s, g) => s + g.totalMes, 0);
-  return { total, pctIngreso: pct(total), grupos };
+  return numero(presupuestoEnCelda(datos, g, i)) || 0;
 }
 
-/** Fracción del mes transcurrida a la fecha 'hoy': 1 si el mes ya pasó, 0 si es futuro. */
-function fraccionDelMes(mes, hoy) {
-  const mesHoy = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
-  if (mes < mesHoy) return 1;
-  if (mes > mesHoy) return 0;
+/** Tasa para planear del mes i; se copia siempre del mes anterior si no está escrita. */
+function tasaPlanMes(datos, i) {
+  const v = numero(datos.tasaPlan[i]);
+  if (v !== null) return v;
+  return i > 0 ? tasaPlanMes(datos, i - 1) : null;
+}
+
+function fraccionDelMes(datos, i, hoy) {
+  const { ano, mesInicio } = datos.config.general;
+  const inicio = new Date(ano, mesInicio - 1 + i, 1);
+  const fin = new Date(ano, mesInicio + i, 1);
+  if (fin <= hoy) return 1;
+  if (inicio > hoy) return 0;
   return hoy.getDate() / new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
 }
 
-function estadoDe(comportamiento, presupuesto, gastado, gastadoRitmo, fraccion) {
-  if (gastado > presupuesto) return 'Excedido';
-  if (comportamiento === 'fija') {
-    if (gastado === 0) return 'Pendiente';
-    return gastado < presupuesto ? 'Pago parcial' : 'Pagado';
-  }
-  if (gastado > 0 && gastadoRitmo === 0) return 'Pagado';
-  return presupuesto > 0 && gastadoRitmo / presupuesto > fraccion + TOLERANCIA_RITMO ? 'Va rápido' : 'En ritmo';
+function estadoDe(comportamiento, presupuesto, real, fraccion) {
+  if (real === null) return 'Pendiente';
+  if (real > presupuesto) return 'Excedido';
+  if (real === presupuesto) return 'Pagado';
+  if (comportamiento !== 'variable') return 'Pago parcial';
+  return presupuesto > 0 && real / presupuesto > fraccion + CONFIG.TOLERANCIA_RITMO ? 'Va rápido' : 'En ritmo';
 }
 
-function calcularPanel(datos, mes, hoy) {
-  const { categorias, subcategorias, tarjetas, metas } = datos.config;
-  const categoriaDeSub = new Map(subcategorias.map((s) => [`${s.categoria}${CONFIG.SEPARADOR}${s.subcategoria}`, s.categoria]));
-  const gastado = {};
-  const ritmo = {};
-  for (const m of datos.movimientos) {
-    if (m.monto == null || mesDeFecha(m.fecha) !== mes) continue;
-    const cat = categoriaDeSub.get(m.subcategoria) || SIN_CATEGORIA;
-    const valor = aMonedaPrincipal(datos, m.monto, m.moneda, mes);
-    gastado[cat] = (gastado[cat] || 0) + valor;
-    if (m.origen !== 'migrado') ritmo[cat] = (ritmo[cat] || 0) + valor;
-  }
+/** Gastos que forman filas del Panel: los que no son partes (una parte huérfana cuenta como gasto propio). */
+const gastosPropios = (datos) => datos.gastos.filter((g) => g.gasto !== '' && !esParte(datos, g));
+/** Gastos que llevan presupuesto propio por persona y forma de pago: todos menos los gastos con partes. */
+const gastosConPresupuesto = (datos) => datos.gastos.filter((g) => g.gasto !== '' && !esPadre(datos, g));
 
-  const fraccion = fraccionDelMes(mes, hoy);
-  const filas = categorias
-    .filter((c) => c.activa || gastado[c.categoria])
-    .map((c) => {
-      const presupuesto = presupuestoDe(datos, c.categoria, mes);
-      const g = gastado[c.categoria] || 0;
-      const tarjeta = tarjetas.find((t) => t.categoriaPago === c.categoria);
-      return {
-        grupo: c.grupo, categoria: c.categoria, tipo: c.tipo, presupuesto, gastado: g,
-        avance: presupuesto > 0 ? g / presupuesto : 0,
-        estado: estadoDe(c.comportamiento, presupuesto, g, ritmo[c.categoria] || 0, fraccion),
-        segunCompras: tarjeta ? cuotasDe(datos, tarjeta.tarjeta, mes) : null,
-      };
-    });
-  if (gastado[SIN_CATEGORIA]) {
-    const g = gastado[SIN_CATEGORIA];
-    filas.push({ grupo: '', categoria: SIN_CATEGORIA, tipo: '', presupuesto: 0, gastado: g, avance: 0,
-      estado: estadoDe('variable', 0, g, ritmo[SIN_CATEGORIA] || 0, fraccion), segunCompras: null });
-  }
-
-  const suma = (lista, clave) => lista.reduce((s, x) => s + x[clave], 0);
-  const ingresos = ingresosDe(datos, mes);
-  const presupuestado = suma(filas, 'presupuesto');
-  const totalGastado = suma(filas, 'gastado');
-  const tipos = metas.map(({ tipo, pct }) => {
-    const g = suma(filas.filter((f) => f.tipo === tipo), 'gastado');
-    return { tipo, gastado: g, pctIngreso: ingresos ? g / ingresos : 0, meta: pct };
-  });
+function ingresosDelMes(datos, i) {
+  const segunda = datos.config.general.segundaMoneda;
+  const tasaPlan = tasaPlanMes(datos, i);
+  const t = tasaPlan || 0;
+  const fuentes = datos.ingresos.map((f) => ({
+    f, enDolares: f.moneda === segunda,
+    p: numero(presupuestoEnCelda(datos, f, i)) || 0, r: numero(celda(f, i, 1)),
+  }));
+  const dolares = fuentes.filter((x) => x.enDolares);
+  const enPesos = fuentes.filter((x) => !x.enDolares);
+  const usdPlan = sumar(dolares.map((x) => x.p));
+  const usdReal = sumar(dolares.map((x) => x.r || 0));
+  const cambios = datos.cambios.filter((c) => c.mes === i && numero(c.dolares) !== null && numero(c.tasa) !== null);
+  const cambiados = sumar(cambios.map((c) => c.dolares));
+  const pesosCambiados = sumar(cambios.map((c) => c.dolares * c.tasa));
+  const usdPorCambiar = Math.max(0, usdReal - cambiados);
+  const realUsdEnPesos = pesosCambiados + usdPorCambiar * t;
+  const planeado = usdPlan * t + sumar(enPesos.map((x) => x.p));
+  const real = realUsdEnPesos + sumar(enPesos.map((x) => x.r || 0));
+  const hayReal = fuentes.some((x) => x.r !== null);
   return {
-    ingresos, presupuestado, gastado: totalGastado, disponible: ingresos - totalGastado,
-    sinAsignar: ingresos - presupuestado, filas, tipos,
+    planeado, real, hayReal, mostrado: hayReal ? real : planeado,
+    tasaPlan, tasaReal: cambiados > 0 ? pesosCambiados / cambiados : null,
+    usdPorCambiar, diferenciaTasa: realUsdEnPesos - usdReal * t,
+    faltaTasa: tasaPlan === null && (usdPlan > 0 || usdReal > 0),
+    porPersona: (persona) => sumar(enPesos.filter((x) => x.f.persona === persona).map((x) => x.r || 0)) +
+      (usdReal > 0 ? realUsdEnPesos * sumar(dolares.filter((x) => x.f.persona === persona).map((x) => x.r || 0)) / usdReal : 0),
+  };
+}
+
+/** Personas que se muestran: las activas y las inactivas con algún valor distinto de 0. */
+function personasVisibles(datos, valores) {
+  return datos.config.personas.filter((p) => p.activa || valores(p.nombre).some((v) => v !== 0));
+}
+
+function filasDelMes(datos, i, fraccion) {
+  const orden = new Map(datos.config.grupos.map((g) => [g.nombre, g.orden]));
+  return gastosPropios(datos)
+    .map((g, indice) => {
+      const presupuesto = presupuestoEfectivo(datos, g, i);
+      const real = numero(celda(g, i, 1));
+      return {
+        indice, tipo: g.tipo, grupo: orden.has(g.grupo) ? g.grupo : SIN_GRUPO, gasto: g.gasto,
+        presupuesto, real, diferencia: presupuesto - (real || 0),
+        avance: presupuesto > 0 ? (real || 0) / presupuesto : 0,
+        estado: estadoDe(g.comportamiento, presupuesto, real, fraccion),
+      };
+    })
+    .filter((f) => f.presupuesto > 0 || f.real !== null)
+    .sort((a, b) => (orden.get(a.grupo) ?? Infinity) - (orden.get(b.grupo) ?? Infinity) || a.indice - b.indice);
+}
+
+/** Resumen del mes i (0 = mes de inicio) tal como lo muestra el Panel. */
+function calcularMes(datos, i, hoy) {
+  const ingresos = ingresosDelMes(datos, i);
+  const filas = filasDelMes(datos, i, fraccionDelMes(datos, i, hoy));
+  const presupuestado = sumar(filas.map((f) => f.presupuesto));
+  const gastado = sumar(filas.map((f) => f.real || 0));
+  const tipos = datos.config.tipos.map((t) => {
+    const real = sumar(filas.filter((f) => f.tipo === t.letra).map((f) => f.real || 0));
+    return { tipo: t.letra, nombre: t.nombre, real, pctIngreso: ingresos.mostrado ? real / ingresos.mostrado : 0, meta: t.meta };
+  });
+  const presupuestaDe = (persona) => sumar(gastosConPresupuesto(datos)
+    .filter((g) => g.persona === persona).map((g) => presupuestoEfectivo(datos, g, i)));
+  const personas = personasVisibles(datos, (p) => [ingresos.porPersona(p), presupuestaDe(p)]).map((p) => {
+    const ingresa = ingresos.porPersona(p.nombre);
+    const presupuesta = presupuestaDe(p.nombre);
+    return { persona: p.nombre, ingresa, presupuesta, leQueda: ingresa - presupuesta };
+  });
+  const ano = Array.from({ length: CONFIG.MESES }, (_, k) => ({
+    presupuestado: sumar(gastosPropios(datos).map((g) => presupuestoEfectivo(datos, g, k))),
+    real: sumar(gastosPropios(datos).map((g) => numero(celda(g, k, 1)) || 0)),
+  }));
+  const { porPersona, ...resumenIngresos } = ingresos;
+  return {
+    ingresos: resumenIngresos, presupuestado, gastado, queda: presupuestado - gastado,
+    sinAsignar: ingresos.planeado - presupuestado,
+    filas: filas.map(({ indice, tipo, ...f }) => f), tipos, personas, ano,
+  };
+}
+
+/** Recuadro de una forma de pago (Efectivo por defecto) para el mes i, por persona. */
+function calcularFormaPago(datos, i, formaPago) {
+  const conPresupuesto = gastosConPresupuesto(datos).filter((g) => g.pago === formaPago);
+  const sinPartes = gastosPropios(datos).filter((g) => !esPadre(datos, g) && g.pago === formaPago);
+  const presupuestadoDe = (p) => sumar(conPresupuesto.filter((g) => g.persona === p).map((g) => presupuestoEfectivo(datos, g, i)));
+  const gastadoDe = (p) => sumar(sinPartes.filter((g) => g.persona === p).map((g) => numero(celda(g, i, 1)) || 0));
+  const filas = personasVisibles(datos, (p) => [presupuestadoDe(p), gastadoDe(p)]).map((p) => {
+    const presupuestado = presupuestadoDe(p.nombre);
+    const gastado = gastadoDe(p.nombre);
+    return { persona: p.nombre, presupuestado, gastado, falta: presupuestado - gastado };
+  });
+  const total = (k) => sumar(filas.map((f) => f[k]));
+  return {
+    filas,
+    total: { presupuestado: total('presupuestado'), gastado: total('gastado'), falta: total('falta') },
+    sinContar: datos.gastos.filter((g) => esPadre(datos, g) &&
+      datos.gastos.some((o) => o.parteDe === g.gasto && o.pago === formaPago)).map((g) => g.gasto),
   };
 }
