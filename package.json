@@ -6,5 +6,8 @@
   "author": "Juanprey15",
   "devDependencies": {
     "@google/clasp": "3.4.1"
+  },
+  "scripts": {
+    "test": "node --test tests/"
   }
 }
