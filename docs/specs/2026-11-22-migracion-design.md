@@ -41,11 +41,13 @@ diciembre, con el historial del año cargado para verlo en el Panel y en el grá
    un grupo renombrado). Los renglones sin título claro reciben su grupo de la tabla.
 10. **Persona, tipo y forma de pago:** de las columnas de cada renglón; las partes toman su forma de pago del
     desglose.
-11. **Comportamiento:** variable para los gastos que fije la tabla; fijo los demás.
-12. **Ingresos:** un valor por fuente y mes en la hoja vieja; se carga como presupuestado y como real. Las
+11. **Gasto con partes por renglón** (renglones distintos que Juan agrupa bajo un gasto, como el colegio y su
+    derecho de grado): una parte por renglón, con el nombre que fije la tabla.
+12. **Comportamiento:** variable para los gastos que fije la tabla; fijo los demás.
+13. **Ingresos:** un valor por fuente y mes en la hoja vieja; se carga como presupuestado y como real. Las
     fuentes en dólares se cargan en dólares; la tasa de cada mes de la hoja vieja es la real (un solo cambio al
     mes): se carga como tasa para planear y como un cambio del mes por el total en dólares a esa tasa.
-13. **Segunda moneda activada** en la Configuración de la familia.
+14. **Segunda moneda activada** en la Configuración de la familia.
 
 ## Enfoque (elegido por Juan: A)
 

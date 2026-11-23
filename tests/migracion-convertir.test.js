@@ -150,3 +150,17 @@ test('una forma de pago con presupuesto 0 no crea parte', () => {
   const datos = convertir(m, tabla);
   assert.deepEqual(datos.gastos.filter((g) => g.parteDe === 'Suscripciones').map((g) => g.gasto), ['Digital', 'Video', 'Sin detallar']);
 });
+
+test('partes por renglón: cada renglón unificado es una parte con el nombre que da la tabla', () => {
+  const m = meses();
+  m[1].renglones.push(r('OTROS', 'Grado', 'Ana', 'Digital', 70, 70, 'N'));
+  m[1].totales = totales(m[1].renglones, m[1].totales.ingreso);
+  const tabla = { ...TABLA, gastos: [...TABLA.gastos,
+    { gasto: 'Arriendo', de: ['Arriendo', 'Grado'], grupo: 'Casa', partesPorRenglon: { Arriendo: 'Mensualidad', Grado: 'Cobro Extra' } }] };
+  const datos = convertir(m, tabla);
+  assert.deepEqual(datos.gastos.filter((g) => g.parteDe === 'Arriendo').map((g) => [g.gasto, g.pago, g.persona, ...mesesDe(g).map((x) => x[0])]),
+    [['Mensualidad', 'Digital', 'Ana', 1000, 1000], ['Cobro Extra', 'Digital', 'Ana', 0, 70]]);
+  assert.deepEqual(mesesDe(fila(datos, 'Arriendo')), [[null, 1000], [null, 1070]]);
+  assert.equal(fila(datos, 'Grado'), undefined);
+  assert.deepEqual(compararTotales(m, datos), []);
+});

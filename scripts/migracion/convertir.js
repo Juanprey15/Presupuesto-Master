@@ -52,8 +52,16 @@ function itemsDesglose(m, i, e) {
   return [...items.values()].filter((x) => x.valor !== 0);
 }
 
-/** Partes de un gasto en un mes: el desglose si cabe en lo presupuestado; si no, una parte por forma de pago. */
+/** Partes de un gasto en un mes: por renglón si la tabla lo pide; si no, el desglose si cabe en lo presupuestado,
+ * o una parte por forma de pago. */
 function partesDelMes(m, i, e, renglones) {
+  if (e.partesPorRenglon) {
+    const nombre = (r) => e.partesPorRenglon[r.desc] || r.desc;
+    return unicos(renglones.map(nombre)).map((parte) => {
+      const rs = renglones.filter((r) => nombre(r) === parte);
+      return { parte, pago: rs[0].pago, persona: rs[0].persona, valor: sumar(rs.map((r) => r.presupuesto || 0)) };
+    });
+  }
   const presupuesto = sumar(renglones.map((r) => r.presupuesto || 0));
   const personaDe = (pago) => (renglones.find((r) => r.pago === pago) || renglones[0]).persona;
   const items = e.desglose ? itemsDesglose(m, i, e) : [];
