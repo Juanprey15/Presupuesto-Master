@@ -115,3 +115,8 @@ test('sin segunda moneda todo se cuenta en la moneda principal y no falta tasa',
   assert.deepEqual(pick(m.ingresos, 'planeado', 'real', 'faltaTasa', 'usdPorCambiar'),
     { planeado: 3002000, real: 2702000, faltaTasa: false, usdPorCambiar: 0 });
 });
+
+test('por persona usa el ingreso planeado mientras el mes no tiene ingresos reales', () => {
+  assert.deepEqual(plano(calcularMes(EJEMPLO, 2, HOY).personas.map((p) => [p.persona, p.ingresa, p.presupuesta, p.leQueda])),
+    [['Ana', 3000000, 2750000, 250000], ['Luis', 7800000, 1450000, 6350000]]);
+});

@@ -101,8 +101,11 @@ function formulaTipos() {
 function formulaPersonas() {
   return `=ARRAYFORMULA(IFERROR(LET(${letGastos('PanelIndice')}${LET_PERSONAS}` +
     'fm,Ingresos!$C$4:$C,ipe,Ingresos!$B$4:$B,irr,INDEX(Ingresos!$D$4:$AA,0,2*i+2),ire,IF(ISNUMBER(irr),irr,0),' +
+    'ipr,INDEX(Ingresos!$D$4:$AA,0,2*i+1),ipp,IF(ISNUMBER(ipr),ipr,0),' +
     `iusd,(fm=CfgSegundaMoneda)*(fm<>"")*CfgUsarSegunda,realUsd,${calc(9)},usdReal,${calc(10)},` +
-    'ing,MAP(per,LAMBDA(x,SUMPRODUCT((ipe=x)*(1-iusd)*ire)+IF(usdReal>0,realUsd*SUMPRODUCT((ipe=x)*iusd*ire)/usdReal,0))),' +
+    `hayIng,${calc(3)},tasa,IF(${calc(4)}="",0,${calc(4)}),` +
+    'ing,MAP(per,LAMBDA(x,IF(hayIng,SUMPRODUCT((ipe=x)*(1-iusd)*ire)+IF(usdReal>0,realUsd*SUMPRODUCT((ipe=x)*iusd*ire)/usdReal,0),' +
+    'SUMPRODUCT((ipe=x)*(1-iusd)*ipp)+tasa*SUMPRODUCT((ipe=x)*iusd*ipp)))),' +
     'pre,MAP(per,LAMBDA(x,SUMPRODUCT((pe=x)*(nm<>"")*(1-padre)*pp))),' +
     'FILTER({per,ing,pre,ing-pre},(act=TRUE)+(ing<>0)+(pre<>0))),""))';
 }

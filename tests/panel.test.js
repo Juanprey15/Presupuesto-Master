@@ -108,3 +108,7 @@ test('recuadro de ingresos: diferencia siempre, tasas solo con segunda moneda', 
   assert.ok(formulaDe('PanelAvisoTasa').includes('CfgUsarSegunda'));
   assert.ok(formulaDe('PanelIngresosCalc').includes('CfgUsarSegunda'));
 });
+
+test('por persona cambia a lo planeado si el mes no tiene ingresos reales', () => {
+  assert.ok(formulaDe('PanelPersonas').includes('INDEX(PanelIngresosCalc,3)'));
+});

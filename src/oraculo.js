@@ -86,8 +86,13 @@ function ingresosDelMes(datos, i) {
     tasaPlan, tasaReal: cambiados > 0 ? pesosCambiados / cambiados : null,
     usdPorCambiar, diferenciaTasa: realUsdEnPesos - usdReal * t,
     faltaTasa: tasaPlan === null && (usdPlan > 0 || usdReal > 0),
-    porPersona: (persona) => sumar(enPesos.filter((x) => x.f.persona === persona).map((x) => x.r || 0)) +
-      (usdReal > 0 ? realUsdEnPesos * sumar(dolares.filter((x) => x.f.persona === persona).map((x) => x.r || 0)) / usdReal : 0),
+    // Con ingresos reales en el mes, lo que llegó; si no, lo planeado (como la cifra grande del Panel).
+    porPersona: (persona) => {
+      const de = (xs) => xs.filter((x) => x.f.persona === persona);
+      if (!hayReal) return sumar(de(enPesos).map((x) => x.p)) + sumar(de(dolares).map((x) => x.p)) * t;
+      return sumar(de(enPesos).map((x) => x.r || 0)) +
+        (usdReal > 0 ? realUsdEnPesos * sumar(de(dolares).map((x) => x.r || 0)) / usdReal : 0);
+    },
   };
 }
 
