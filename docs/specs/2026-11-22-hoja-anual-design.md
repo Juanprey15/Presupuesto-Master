@@ -49,10 +49,13 @@ Medidos sobre "Presupuesto Morchis 2026" (Ene a Nov):
   escribe encima solo lo que cambia, y desde ahí los meses siguientes toman el valor nuevo.
 - **H3. Grupos como dato.** Cada fila lleva su Grupo en una columna con lista desplegable. Agregar
   una categoría es: escribirla en Configuración y elegirla en las filas nuevas.
-- **H4. Partes de un gasto.** Una fila puede ser parte de otra (columna "Parte de"). El gasto con
-  partes suma solo su presupuestado y su real; no se escribe en él. Cada parte lleva su persona y su
-  forma de pago. Reemplaza los desgloses laterales y los renglones duplicados "Mercado Efectivo" y
-  "Mercado Digital".
+- **H4. Partes de un gasto (solo plan).** Una fila puede ser parte de otra (columna "Parte de").
+  Las partes llevan solo presupuestado, con su persona y su forma de pago: son el reparto planeado
+  (Mercado en Carnes, Aseo, Frutas...). El presupuestado del gasto con partes es la suma de sus
+  partes y no se escribe en él; su real se escribe una sola vez en el renglón del gasto. Las celdas
+  de real de las partes quedan grises y sin uso. Vale igual para Mercado, Servicios públicos y
+  Suscripciones. Reemplaza los desgloses laterales y los renglones duplicados "Mercado Efectivo" y
+  "Mercado Digital" (decidido por Juan el 2026-11-22).
 - **H5. Filas en cualquier lugar.** Insertar, mover o borrar filas en cualquier parte de la hoja no
   rompe ningún total.
 - **H6. Estado calculado, siempre con texto.** Por fila y mes:
@@ -64,7 +67,9 @@ Medidos sobre "Presupuesto Morchis 2026" (Ene a Nov):
   La diferencia se muestra en palabras ("quedan 520.000", "se pasó 60.000").
 - **H7. Efectivo por persona.** El panel muestra, para el mes elegido y una forma de pago elegible
   (por defecto Efectivo): presupuestado, gastado y falta, por persona y en total. El presupuestado
-  total es lo que hay que sacar del cajero.
+  total es lo que hay que sacar del cajero. Como las partes no tienen real (H4), "gastado" y "falta"
+  solo cuentan los gastos sin partes; si el mes tiene partes en esa forma de pago, el recuadro lo
+  dice en texto ("sin contar Mercado").
 - **H8. Ingresos con la misma estructura.** Pestaña "Ingresos <año>": una fila por fuente (persona,
   moneda) y Presupuestado y Real por mes.
 - **H9. Dos tasas por mes para la segunda moneda.**
@@ -136,8 +141,8 @@ datos reales solo en `data/raw/` y en el Drive de la familia.
 
 - Opción B; sin gastos hormiga.
 - Los desgloses (Mercado por tienda, Suscripciones, Servicios) se mantienen como reparto del
-  presupuesto con su real; Vicky los usa en su agenda. Servicios públicos usa el mismo mecanismo de
-  partes.
+  presupuesto, sin real por parte; Vicky los usa en su agenda. El real va en el renglón del gasto.
+  Servicios públicos usa el mismo mecanismo de partes.
 - Forma de pago y persona por parte; el efectivo total y por persona sin sumas aparte.
 - Agregar una categoría: Configuración y luego la lista desplegable en cada fila.
 - Dos tasas por mes; la real es manual, por cambio, con varios cambios posibles en el mes.
@@ -198,6 +203,7 @@ cambios dentro de la hoja de ingresos y diseño de la pestaña Inicio.
 
 ## Criterios de éxito
 
+- Vicky la prueba con sus datos reales y la aprueba antes de pasarla a la versión que se vende.
 - La familia usa la hoja anual en diciembre de 2026 y abre enero de 2027 sin copiar pestañas.
 - Insertar filas en cualquier lugar no cambia ningún total incorrectamente (prueba del generador).
 - El panel de un mes coincide a la unidad con el oráculo sobre los mismos datos.
