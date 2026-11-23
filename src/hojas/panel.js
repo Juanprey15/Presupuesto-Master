@@ -3,7 +3,7 @@
  * calcularFormaPago (oraculo.js) y se escriben en sintaxis en_US.
  */
 
-const FILA_TABLA = 12;
+const FILA_TABLA = 25;
 const FILAS_TABLA = CONFIG.FILAS_GASTOS;
 const ULTIMA_FILA_TABLA = FILA_TABLA + FILAS_TABLA - 1;
 const MESES_CONSTANTE = `{${Array.from({ length: CONFIG.MESES }, (_, k) => k).join(';')}}`;
@@ -121,7 +121,7 @@ function formulaBarra(fila) {
 
 /**
  * Celdas del Panel: posición, rango con nombre (y su tamaño), fórmula o valor y, en los selectores, su lista.
- * Lo visible sigue el boceto aprobado: tabla en B:H y recuadros en J:N. Los cálculos viven en columnas
+ * Lo visible sigue el boceto aprobado: cifras, gráfico del año y tabla en B:H; recuadros en J:N. Los cálculos viven en columnas
  * ocultas (Z: auxiliares; AB:AH: tabla del mes; AJ:AL: año) y las columnas visibles los muestran.
  */
 function disenoPanel(datos) {
@@ -140,20 +140,21 @@ function disenoPanel(datos) {
     { a1: 'Z2', nombre: 'PanelMesInicio', formula: '=DATE(CfgAno,CfgMesInicio+PanelIndice,1)' },
     { a1: 'Z3', nombre: 'PanelFraccion', formula: formulaFraccion() },
     { a1: 'Z5', nombre: 'PanelIngresosCalc', filas: 10, formula: formulaIngresosCalc() },
-    { a1: 'Z16', nombre: 'PanelPresupuestado', formula: '=SUM(AD12:AD)' },
+    { a1: 'Z16', nombre: 'PanelPresupuestado', formula: `=SUM(AD${f}:AD)` },
     { a1: 'Z17', nombre: 'PanelSinAsignar', formula: `=${calc(1)}-PanelPresupuestado` },
     { a1: 'Z18', nombre: 'PanelSinAsignarEtiqueta', formula: '=IF(PanelSinAsignar<0,"Sobre-asignado","Sin asignar")' },
 
     { a1: 'B6', nombre: 'PanelIngresosEtiqueta', formula: `=IF(${calc(3)},"Ingresos","Ingresos (planeados)")` },
     { a1: 'B7', nombre: 'PanelIngresos', formula: `=IF(${calc(3)},${calc(2)},${calc(1)})` },
     { a1: 'D6', valor: 'Gastado hasta hoy' },
-    { a1: 'D7', nombre: 'PanelGastado', formula: '=SUM(AE12:AE)' },
+    { a1: 'D7', nombre: 'PanelGastado', formula: `=SUM(AE${f}:AE)` },
     { a1: 'F6', valor: 'Queda del presupuesto' },
     { a1: 'F7', nombre: 'PanelQueda', formula: '=PanelPresupuestado-PanelGastado' },
     { a1: 'B8', formula: '="Presupuestado "&TEXT(PanelPresupuestado,"#,##0")&". "&PanelSinAsignarEtiqueta&' +
       '" (ingresos menos presupuesto): "&TEXT(ABS(PanelSinAsignar),"#,##0")&"."' },
 
-    { a1: 'B10', valor: 'Presupuestado contra real' },
+    { a1: 'B10', valor: 'El año de un vistazo' },
+    { a1: `B${f - 2}`, valor: 'Presupuestado contra real' },
     { a1: `AB${f}`, nombre: 'PanelTabla', filas: FILAS_TABLA, columnas: 7, formula: formulaTabla() },
     { a1: `B${f}`, formula: `=ARRAYFORMULA(IF(AB${f}:AB${u}="","",IF(AB${f}:AB${u}=AB${f - 1}:AB${u - 1},"",AB${f}:AB${u})))` },
     { a1: `C${f}`, formula: `=ARRAYFORMULA(IF(AC${f}:AC${u}="","",AC${f}:AF${u}))` },
@@ -177,7 +178,6 @@ function disenoPanel(datos) {
     { a1: 'J30', nombre: 'PanelTipos', filas: 6, columnas: 5, formula: formulaTipos() },
     { a1: 'J37', valor: 'Por persona' },
     { a1: 'J39', nombre: 'PanelPersonas', filas: 8, columnas: 4, formula: formulaPersonas() },
-    { a1: 'J48', valor: 'El año de un vistazo' },
     { a1: 'AJ11', nombre: 'PanelAno', filas: CONFIG.MESES, columnas: 3,
       formula: `={${Array.from({ length: CONFIG.MESES }, (_, k) => `DATE(CfgAno,CfgMesInicio+${k},1)`).join(';')}}` },
     { a1: 'AK11', formula: formulaAno('presupuestado') },
@@ -243,7 +243,7 @@ function construirPanel(ss, datos) {
   sh.setRowHeight(7, 34);
 
   // Tabla del mes.
-  for (const t of ['B10', 'J28', 'J37', 'J48']) r(t).setFontColor(P.primary).setFontWeight('bold').setFontSize(12);
+  for (const t of ['B10', `B${f - 2}`, 'J28', 'J37']) r(t).setFontColor(P.primary).setFontWeight('bold').setFontSize(12);
   r(`B${f - 1}:H${f - 1}`).setBorder(null, null, true, null, null, null, P.line, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   r(`D${f - 1}:F${u}`).setHorizontalAlignment('right');
   r(`D${f}:E${u}`).setNumberFormat(numero);
@@ -267,11 +267,10 @@ function construirPanel(ss, datos) {
   r('J8:M8').setFontColor(P.line);
   r('K8:M16').setHorizontalAlignment('right');
   r('K9:M16').setNumberFormat(numero);
-  r('J17:K17').merge().setFontSize(22).setFontWeight('bold').setFontColor(P.surface).setNumberFormat(numero).setHorizontalAlignment('left');
+  r('J17:K17').merge().setFontSize(16).setFontWeight('bold').setFontColor(P.surface).setNumberFormat(numero).setHorizontalAlignment('left');
   r('J18:N18').merge().setFontColor(P.line).setFontSize(9);
   r('K21:K25').setNumberFormat(numero).setHorizontalAlignment('right');
   r('J26:N26').merge().setFontWeight('bold').setFontColor(P.surface);
-  sh.setRowHeight(17, 34);
 
   // Reparto y personas.
   r('L29:N29').setHorizontalAlignment('right');
@@ -280,12 +279,12 @@ function construirPanel(ss, datos) {
   r('K38:M38').setHorizontalAlignment('right');
   r('K39:M46').setNumberFormat(numero);
 
-  // Año: datos en columnas ocultas y gráfico a la derecha.
+  // Año: datos en columnas ocultas y gráfico entre las cifras grandes y la tabla.
   r('AJ11:AJ22').setNumberFormat('mmm');
   r('AK11:AL22').setNumberFormat(numero);
   sh.insertChart(sh.newChart().setChartType(Charts.ChartType.COLUMN).addRange(r('AJ10:AL22'))
     .setNumHeaders(1).setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.SHOW_BOTH)
-    .setPosition(49, 10, 0, 0).setOption('width', 540).setOption('height', 260)
+    .setPosition(11, 2, 0, 0).setOption('width', 820).setOption('height', 230)
     .setOption('colors', [P.line, P.primary]).setOption('legend', { position: 'bottom' }).build());
 
   [16, 100, 170, 110, 110, 125, 110, 105, 28, 160, 105, 105, 105, 60].forEach((ancho, i) => sh.setColumnWidth(i + 1, ancho));

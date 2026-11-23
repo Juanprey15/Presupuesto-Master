@@ -74,8 +74,8 @@ test('avisos de la tasa y del gastado sin contar', () => {
 });
 
 test('los totales suman la tabla entera, sin fila final', () => {
-  assert.equal(formulaDe('PanelGastado'), '=SUM(AE12:AE)');
-  assert.equal(formulaDe('PanelPresupuestado'), '=SUM(AD12:AD)');
+  assert.equal(formulaDe('PanelGastado'), '=SUM(AE25:AE)');
+  assert.equal(formulaDe('PanelPresupuestado'), '=SUM(AD25:AD)');
 });
 
 test('forma de pago con fila "Sin persona" y tolerancia desde Configuración', () => {
@@ -91,11 +91,11 @@ test('un cambio cuenta en su mes aunque la fecha no sea el día 1', () => {
 
 test('distribución del boceto: tabla visible en B:H, recuadros en J:N y selectores a la vista', () => {
   const en = (a1) => celdas().find((c) => c.a1 === a1);
-  assert.equal(en('AB12').nombre, 'PanelTabla');
-  assert.match(en('B12').formula, /AB12:AB211/);
-  assert.match(en('C12').formula, /AC12:AF211/);
-  assert.match(en('G12').formula, /^=IF\(C12="","",SPARKLINE\(MIN\(AG12,1\)/);
-  assert.match(en('H12').formula, /AH12:AH211/);
+  assert.equal(en('AB25').nombre, 'PanelTabla');
+  assert.match(en('B25').formula, /AB25:AB224/);
+  assert.match(en('C25').formula, /AC25:AF224/);
+  assert.match(en('G25').formula, /^=IF\(C25="","",SPARKLINE\(MIN\(AG25,1\)/);
+  assert.match(en('H25').formula, /AH25:AH224/);
   assert.equal(en('L1').nombre, 'PanelMes');
   assert.equal(en('L6').nombre, 'PanelFormaPago');
   assert.equal(en('J9').nombre, 'PanelFormaPagoTabla');
