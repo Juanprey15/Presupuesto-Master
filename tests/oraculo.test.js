@@ -104,3 +104,14 @@ test('la tolerancia de "va rápido" sale de la Configuración', () => {
   const d = conGeneral(EJEMPLO, { tolerancia: 0.5 });
   assert.equal(fila(calcularMes(d, 2, HOY), 'Salidas').estado, 'En ritmo');
 });
+
+test('diferencia de ingresos: lo que llegó menos lo planeado', () => {
+  assert.equal(calcularMes(EJEMPLO, 0, HOY).ingresos.diferencia, -100000);
+  assert.equal(calcularMes(EJEMPLO, 2, HOY).ingresos.diferencia, null);
+});
+
+test('sin segunda moneda todo se cuenta en la moneda principal y no falta tasa', () => {
+  const m = calcularMes({ ...conGeneral(EJEMPLO, { usarSegunda: false }), tasaPlan: [] }, 0, HOY);
+  assert.deepEqual(pick(m.ingresos, 'planeado', 'real', 'faltaTasa', 'usdPorCambiar'),
+    { planeado: 3002000, real: 2702000, faltaTasa: false, usdPorCambiar: 0 });
+});

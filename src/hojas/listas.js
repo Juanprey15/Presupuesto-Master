@@ -12,7 +12,7 @@ function formulasListas() {
         'FILTER(CfgGruposOrden,CfgGruposActivo=TRUE,CfgGruposNombre<>""),TRUE))',
     },
     { nombre: 'ListaTipos', formula: '=IFERROR(FILTER(CfgTiposLetra,CfgTiposLetra<>""))' },
-    { nombre: 'ListaMonedas', formula: '={CfgMoneda;CfgSegundaMoneda}' },
+    { nombre: 'ListaMonedas', formula: '=IF(CfgUsarSegunda,{CfgMoneda;CfgSegundaMoneda},CfgMoneda)' },
     { nombre: 'ListaGastosPadre', formula: '=IFERROR(UNIQUE(FILTER(Gastos!$A$3:$A,Gastos!$C$3:$C="",Gastos!$A$3:$A<>"")))' },
     { nombre: 'ListaMesesAno', formula: `={${meses}}`, formato: 'mmmm yyyy' },
     { nombre: 'ListaMesesPanel', formula: `={"Mes actual";${meses}}`, formato: 'mmmm yyyy' },

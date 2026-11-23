@@ -22,7 +22,7 @@ const EJEMPLO = (() => {
 
   return {
     config: {
-      general: { nombre: 'Familia Prueba', ano: 2026, mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true, tolerancia: 0.1 },
+      general: { nombre: 'Familia Prueba', ano: 2026, mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true, tolerancia: 0.1, usarSegunda: true },
       personas: [['Ana', true], ['Luis', true], ['Sol', false]].map(([nombre, activa]) => ({ nombre, activa })),
       formasPago: [['Efectivo', true], ['Digital', true], ['Tarjeta Azul', false]].map(([nombre, activa]) => ({ nombre, activa })),
       tipos: [['E', 'Esenciales', 0.5], ['A', 'Ahorro', 0.2], ['I', 'Inversión', 0.1], ['N', 'No esenciales', 0.2]]

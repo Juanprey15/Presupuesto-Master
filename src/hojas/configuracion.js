@@ -8,6 +8,7 @@ const FILAS_GENERAL = [
   ['Año', 'ano', 'CfgAno'],
   ['Mes en que empieza el año (1 a 12)', 'mesInicio', 'CfgMesInicio'],
   ['Moneda', 'moneda', 'CfgMoneda'],
+  ['Usar segunda moneda en los ingresos', 'usarSegunda', 'CfgUsarSegunda'],
   ['Segunda moneda (ingresos)', 'segundaMoneda', 'CfgSegundaMoneda'],
   ['Copiar el presupuesto al mes siguiente', 'copiar', 'CfgCopiar'],
   ['Va rápido si el avance supera al del mes en', 'tolerancia', 'CfgTolerancia'],
@@ -65,8 +66,11 @@ function construirConfiguracion(ss, datos) {
     for (const r of t.rangos) ss.setNamedRange(r.nombre, sh.getRange(r.fila, r.columna, r.unaCelda ? 1 : alto, 1));
   }
   const celda = (nombre) => ss.getRangeByName(nombre);
-  celda('CfgCopiar').insertCheckboxes();
-  if (datos ? datos.config.general.copiar : CONFIG.DEFECTOS.general.copiar) celda('CfgCopiar').check();
+  const general = (datos ? datos.config : CONFIG.DEFECTOS).general;
+  for (const [nombre, clave] of [['CfgCopiar', 'copiar'], ['CfgUsarSegunda', 'usarSegunda']]) {
+    celda(nombre).insertCheckboxes();
+    if (general[clave]) celda(nombre).check(); else celda(nombre).uncheck();
+  }
   celda('CfgMesInicio').setDataValidation(SpreadsheetApp.newDataValidation()
     .requireNumberBetween(1, 12).setAllowInvalid(false).build());
   celda('CfgAno').setNumberFormat('0');

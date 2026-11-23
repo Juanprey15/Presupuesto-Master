@@ -55,7 +55,7 @@ La planilla tiene una hoja por año con los meses en columnas:
 | Inicio | Nombre, versión y cómo se usa |
 | Panel | Resumen del mes elegido: presupuestado contra real, efectivo por persona, ingresos y tasa, año |
 | Gastos | Una fila por gasto (o parte de un gasto) y Presup. / Real por mes; el presupuesto se copia solo |
-| Ingresos | Fuentes de ingreso por mes, tasa para planear y tabla de cambios de moneda |
+| Ingresos | Fuentes de ingreso por mes; con la segunda moneda activada en Configuración, tasa para planear y tabla de cambios |
 | Configuración | Nombre, año, monedas, personas, formas de pago, tipos con metas y grupos |
 
 ## Estructura

@@ -101,3 +101,10 @@ test('distribución del boceto: tabla visible en B:H, recuadros en J:N y selecto
   assert.equal(en('J9').nombre, 'PanelFormaPagoTabla');
   assert.equal(en('AJ11').nombre, 'PanelAno');
 });
+
+test('recuadro de ingresos: diferencia siempre, tasas solo con segunda moneda', () => {
+  assert.ok(formulaDe('PanelIngresosMes').includes('"Diferencia"'));
+  assert.ok(formulaDe('PanelTasa').includes('CfgUsarSegunda'));
+  assert.ok(formulaDe('PanelAvisoTasa').includes('CfgUsarSegunda'));
+  assert.ok(formulaDe('PanelIngresosCalc').includes('CfgUsarSegunda'));
+});

@@ -13,7 +13,7 @@ const celdaDe = (d, a1) => {
 
 test('fila de la tasa para planear: escrita o copiada del mes anterior', () => {
   const d = disenoIngresos(EJEMPLO);
-  assert.deepEqual([...d.filas[0]], ['Tasa para planear', '', '=CfgSegundaMoneda']);
+  assert.deepEqual([...d.filas[0]], ['=IF(CfgUsarSegunda,"Tasa para planear","")', '', '=IF(CfgUsarSegunda,CfgSegundaMoneda,"")']);
   assert.equal(celdaDe(d, 'D3').valor, 4000);
   assert.equal(celdaDe(d, 'F3').formula, '=IF(D3="","",D3)');
   assert.equal(celdaDe(d, 'H3').valor, 3900);
@@ -50,4 +50,10 @@ test('la tasa real de Ingresos cuenta cambios de cualquier día del mes', () => 
   const f = disenoIngresos(EJEMPLO).celdas.find((c) => c.fila === 3 && c.columna === 5).formula;
   assert.match(f, /SUMIFS\(/);
   assert.match(f, /">="&DATE\(CfgAno,CfgMesInicio\+0,1\)/);
+});
+
+test('la fila de tasa y la tabla de cambios solo se ven con segunda moneda', () => {
+  const d = disenoIngresos(EJEMPLO);
+  assert.equal(d.filas[0][0], '=IF(CfgUsarSegunda,"Tasa para planear","")');
+  assert.equal(d.cambios.formulasEncabezado[0], '=IF(CfgUsarSegunda,"Mes del ingreso","")');
 });

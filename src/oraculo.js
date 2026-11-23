@@ -62,18 +62,18 @@ const gastosPropios = (datos) => datos.gastos.filter((g) => g.gasto !== '' && !e
 const gastosConPresupuesto = (datos) => datos.gastos.filter((g) => g.gasto !== '' && !esPadre(datos, g));
 
 function ingresosDelMes(datos, i) {
-  const segunda = datos.config.general.segundaMoneda;
+  const { segundaMoneda: segunda, usarSegunda } = datos.config.general;
   const tasaPlan = tasaPlanMes(datos, i);
   const t = tasaPlan || 0;
   const fuentes = datos.ingresos.map((f) => ({
-    f, enDolares: f.moneda === segunda,
+    f, enDolares: Boolean(usarSegunda) && f.moneda === segunda,
     p: numero(presupuestoEnCelda(datos, f, i)) || 0, r: numero(celda(f, i, 1)),
   }));
   const dolares = fuentes.filter((x) => x.enDolares);
   const enPesos = fuentes.filter((x) => !x.enDolares);
   const usdPlan = sumar(dolares.map((x) => x.p));
   const usdReal = sumar(dolares.map((x) => x.r || 0));
-  const cambios = datos.cambios.filter((c) => c.mes === i && numero(c.dolares) !== null && numero(c.tasa) !== null);
+  const cambios = !usarSegunda ? [] : datos.cambios.filter((c) => c.mes === i && numero(c.dolares) !== null && numero(c.tasa) !== null);
   const cambiados = sumar(cambios.map((c) => c.dolares));
   const pesosCambiados = sumar(cambios.map((c) => c.dolares * c.tasa));
   const usdPorCambiar = Math.max(0, usdReal - cambiados);
@@ -82,7 +82,7 @@ function ingresosDelMes(datos, i) {
   const real = realUsdEnPesos + sumar(enPesos.map((x) => x.r || 0));
   const hayReal = fuentes.some((x) => x.r !== null);
   return {
-    planeado, real, hayReal, mostrado: hayReal ? real : planeado,
+    planeado, real, hayReal, mostrado: hayReal ? real : planeado, diferencia: hayReal ? real - planeado : null,
     tasaPlan, tasaReal: cambiados > 0 ? pesosCambiados / cambiados : null,
     usdPorCambiar, diferenciaTasa: realUsdEnPesos - usdReal * t,
     faltaTasa: tasaPlan === null && (usdPlan > 0 || usdReal > 0),

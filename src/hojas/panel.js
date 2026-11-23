@@ -59,10 +59,10 @@ function formulaTabla() {
 function formulaIngresosCalc() {
   return '=ARRAYFORMULA(LET(i,PanelIndice,ini,PanelMesInicio,fm,Ingresos!$C$4:$C,' +
     'pr,INDEX(Ingresos!$D$4:$AA,0,2*i+1),rr,INDEX(Ingresos!$D$4:$AA,0,2*i+2),' +
-    'pp,IF(ISNUMBER(pr),pr,0),re,IF(ISNUMBER(rr),rr,0),usd,(fm=CfgSegundaMoneda)*(fm<>""),' +
+    'pp,IF(ISNUMBER(pr),pr,0),re,IF(ISNUMBER(rr),rr,0),usd,(fm=CfgSegundaMoneda)*(fm<>"")*CfgUsarSegunda,' +
     'tr,INDEX(Ingresos!$D$3:$AA,1,2*i+1),tieneTasa,ISNUMBER(tr),tasa,IF(tieneTasa,tr,0),' +
     'cmes,Ingresos!$AC$3:$AC,cd,Ingresos!$AE$3:$AE,ct,Ingresos!$AF$3:$AF,' +
-    'ok,(cmes>=ini)*(cmes<EDATE(ini,1))*ISNUMBER(cd)*ISNUMBER(ct),dol,IF(ISNUMBER(cd),cd,0),tas,IF(ISNUMBER(ct),ct,0),' +
+    'ok,(cmes>=ini)*(cmes<EDATE(ini,1))*ISNUMBER(cd)*ISNUMBER(ct)*CfgUsarSegunda,dol,IF(ISNUMBER(cd),cd,0),tas,IF(ISNUMBER(ct),ct,0),' +
     'cambiados,SUMPRODUCT(ok*dol),pesos,SUMPRODUCT(ok*dol*tas),' +
     'usdPlan,SUMPRODUCT(usd*pp),usdReal,SUMPRODUCT(usd*re),' +
     'porCambiar,MAX(0,usdReal-cambiados),realUsd,pesos+porCambiar*tasa,' +
@@ -101,7 +101,7 @@ function formulaTipos() {
 function formulaPersonas() {
   return `=ARRAYFORMULA(IFERROR(LET(${letGastos('PanelIndice')}${LET_PERSONAS}` +
     'fm,Ingresos!$C$4:$C,ipe,Ingresos!$B$4:$B,irr,INDEX(Ingresos!$D$4:$AA,0,2*i+2),ire,IF(ISNUMBER(irr),irr,0),' +
-    `iusd,(fm=CfgSegundaMoneda)*(fm<>""),realUsd,${calc(9)},usdReal,${calc(10)},` +
+    `iusd,(fm=CfgSegundaMoneda)*(fm<>"")*CfgUsarSegunda,realUsd,${calc(9)},usdReal,${calc(10)},` +
     'ing,MAP(per,LAMBDA(x,SUMPRODUCT((ipe=x)*(1-iusd)*ire)+IF(usdReal>0,realUsd*SUMPRODUCT((ipe=x)*iusd*ire)/usdReal,0))),' +
     'pre,MAP(per,LAMBDA(x,SUMPRODUCT((pe=x)*(nm<>"")*(1-padre)*pp))),' +
     'FILTER({per,ing,pre,ing-pre},(act=TRUE)+(ing<>0)+(pre<>0))),""))';
@@ -168,12 +168,13 @@ function disenoPanel(datos) {
     { a1: 'J18', formula: '=IF(PanelFormaPago="Efectivo","es lo que hay que sacar del cajero este mes",' +
       '"es lo presupuestado con "&PanelFormaPago&" este mes")' },
     { a1: 'J20', valor: 'Ingresos del mes' },
-    { a1: 'J21', nombre: 'PanelTasa', filas: 2, columnas: 2,
-      formula: `={"Tasa para planear",IF(${calc(4)}="","falta",${calc(4)});"Tasa real",IF(${calc(5)}="","pendiente",${calc(5)})}` },
-    { a1: 'J23', nombre: 'PanelIngresosMes', filas: 3, columnas: 2,
-      formula: `={"Planeado",${calc(1)};"Llegó",IF(${calc(3)},${calc(2)},"");"Diferencia por la tasa",${calc(7)}}` },
-    { a1: 'J26', nombre: 'PanelAvisoTasa',
-      formula: `=IF(${calc(8)},"Falta la tasa para planear",IF(${calc(6)}>0,"Faltan "&CfgSegundaMoneda&" "&TEXT(${calc(6)},"#,##0")&" por cambiar",""))` },
+    { a1: 'J21', nombre: 'PanelIngresosMes', filas: 3, columnas: 2,
+      formula: `={"Planeado",${calc(1)};"Llegó",IF(${calc(3)},${calc(2)},"");"Diferencia",IF(${calc(3)},${calc(2)}-${calc(1)},"")}` },
+    { a1: 'J24', nombre: 'PanelTasa', filas: 3, columnas: 2,
+      formula: `=IF(CfgUsarSegunda,{"Tasa para planear",IF(${calc(4)}="","falta",${calc(4)});"Tasa real",` +
+        `IF(${calc(5)}="","pendiente",${calc(5)});"Diferencia por la tasa",${calc(7)}},{"","";"","";"",""})` },
+    { a1: 'J27', nombre: 'PanelAvisoTasa',
+      formula: `=IF(NOT(CfgUsarSegunda),"",IF(${calc(8)},"Falta la tasa para planear",IF(${calc(6)}>0,"Faltan "&CfgSegundaMoneda&" "&TEXT(${calc(6)},"#,##0")&" por cambiar","")))` },
     { a1: 'J28', valor: 'Reparto contra la meta' },
     { a1: 'J30', nombre: 'PanelTipos', filas: 6, columnas: 5, formula: formulaTipos() },
     { a1: 'J37', valor: 'Por persona' },
@@ -260,7 +261,7 @@ function construirPanel(ss, datos) {
   ]);
 
   // Recuadros oscuros: forma de pago e ingresos.
-  for (const caja of ['J6:N18', 'J20:N26']) r(caja).setBackground(P.deep).setFontColor(P.ground);
+  for (const caja of ['J6:N18', 'J20:N27']) r(caja).setBackground(P.deep).setFontColor(P.ground);
   for (const t of ['J6', 'J20']) r(t).setFontColor(P.surface).setFontWeight('bold').setFontSize(12);
   r('L6:N6').merge().setBackground(P.surface).setFontColor(P.ink).setFontWeight('bold');
   r('J7:N7').merge().setFontColor(P.line).setFontSize(9);
@@ -269,8 +270,8 @@ function construirPanel(ss, datos) {
   r('K9:M16').setNumberFormat(numero);
   r('J17:K17').merge().setFontSize(16).setFontWeight('bold').setFontColor(P.surface).setNumberFormat(numero).setHorizontalAlignment('left');
   r('J18:N18').merge().setFontColor(P.line).setFontSize(9);
-  r('K21:K25').setNumberFormat(numero).setHorizontalAlignment('right');
-  r('J26:N26').merge().setFontWeight('bold').setFontColor(P.surface);
+  r('K21:K26').setNumberFormat(numero).setHorizontalAlignment('right');
+  r('J27:N27').merge().setFontWeight('bold').setFontColor(P.surface);
 
   // Reparto y personas.
   r('L29:N29').setHorizontalAlignment('right');

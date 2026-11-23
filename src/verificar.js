@@ -41,12 +41,13 @@ function compararMes(ss, i, hoy, diferencias) {
 
   compararFilas('PanelTabla', filasDe(ss, 'PanelTabla'),
     m.filas.map((f) => [f.grupo, f.gasto, f.presupuesto, f.real, f.diferencia, f.avance, f.estado]), anotar);
-  compararFilas('PanelTasa', ss.getRangeByName('PanelTasa').getValues(), [
-    ['Tasa para planear', m.ingresos.tasaPlan === null ? 'falta' : m.ingresos.tasaPlan],
-    ['Tasa real', m.ingresos.tasaReal === null ? 'pendiente' : m.ingresos.tasaReal]], anotar);
   compararFilas('PanelIngresosMes', ss.getRangeByName('PanelIngresosMes').getValues(), [
     ['Planeado', m.ingresos.planeado], ['Llegó', m.ingresos.hayReal ? m.ingresos.real : ''],
-    ['Diferencia por la tasa', m.ingresos.diferenciaTasa]], anotar);
+    ['Diferencia', m.ingresos.diferencia]], anotar);
+  compararFilas('PanelTasa', ss.getRangeByName('PanelTasa').getValues(), EJEMPLO.config.general.usarSegunda ? [
+    ['Tasa para planear', m.ingresos.tasaPlan === null ? 'falta' : m.ingresos.tasaPlan],
+    ['Tasa real', m.ingresos.tasaReal === null ? 'pendiente' : m.ingresos.tasaReal],
+    ['Diferencia por la tasa', m.ingresos.diferenciaTasa]] : [['', ''], ['', ''], ['', '']], anotar);
   const porCambiar = Math.round(m.ingresos.usdPorCambiar).toLocaleString('es-CO');
   anotar('PanelAvisoTasa', valor('PanelAvisoTasa'), m.ingresos.faltaTasa ? 'Falta la tasa para planear'
     : m.ingresos.usdPorCambiar > 0 ? `Faltan ${segundaMoneda} ${porCambiar} por cambiar` : '');

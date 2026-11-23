@@ -23,7 +23,7 @@ function disenoIngresos(datos) {
   const fuentes = datos ? datos.ingresos : [];
   const tasaPlan = datos ? datos.tasaPlan : [];
   const claves = Object.keys(CONFIG.COLUMNAS.ingresos);
-  const filas = [['Tasa para planear', '', '=CfgSegundaMoneda']];
+  const filas = [['=IF(CfgUsarSegunda,"Tasa para planear","")', '', '=IF(CfgUsarSegunda,CfgSegundaMoneda,"")']];
   const celdas = [];
   for (let i = 0; i < CONFIG.MESES; i++) {
     const cp = columnaMes(PRIMERA_COLUMNA_INGRESOS, i, 'presupuesto');
@@ -54,6 +54,7 @@ function disenoIngresos(datos) {
     cambios: {
       columna: COLUMNA_CAMBIOS,
       encabezados: Object.values(CONFIG.COLUMNAS.cambios),
+      formulasEncabezado: Object.values(CONFIG.COLUMNAS.cambios).map((t) => `=IF(CfgUsarSegunda,"${t}","")`),
       filas: (datos ? datos.cambios : []).map((c) => {
         const [y, mm, dd] = c.fecha.split('-').map(Number);
         return [new Date(ano, mesInicio - 1 + c.mes, 1), new Date(y, mm - 1, dd), c.dolares, c.tasa];
@@ -78,8 +79,8 @@ function construirIngresos(ss, datos) {
 
   const c = diseno.cambios;
   const ancho = c.encabezados.length;
-  sh.getRange(1, c.columna).setValue('Cambios de moneda').setFontWeight('bold');
-  sh.getRange(2, c.columna, 1, ancho).setValues([c.encabezados]).setBackground(P.deep).setFontColor(P.ground).setFontWeight('bold');
+  sh.getRange(1, c.columna).setFormula('=IF(CfgUsarSegunda,"Cambios de moneda","")').setFontWeight('bold');
+  sh.getRange(2, c.columna, 1, ancho).setFormulas([c.formulasEncabezado]).setBackground(P.deep).setFontColor(P.ground).setFontWeight('bold');
   if (c.filas.length) sh.getRange(f0, c.columna, c.filas.length, 4).setValues(c.filas);
   sh.getRange(f0, c.columna + 4, FILAS_CAMBIOS, 1)
     .setFormulas(Array.from({ length: FILAS_CAMBIOS }, (_, k) => [c.formulaPesos(f0 + k)]));

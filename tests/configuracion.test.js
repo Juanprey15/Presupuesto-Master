@@ -67,3 +67,11 @@ test('los meses del año salen de la Configuración y el Panel ofrece "Mes actua
 test('la tolerancia de "va rápido" es una celda de Configuración', () => {
   assert.ok(nombres().includes('CfgTolerancia'));
 });
+
+test('la segunda moneda se activa con una casilla, apagada por defecto', () => {
+  assert.ok(nombres().includes('CfgUsarSegunda'));
+  const valor = (d) => { const g = disenoConfiguracion(d).find((t) => t.clave === 'General'); return g.filas[g.rangos.find((x) => x.nombre === 'CfgUsarSegunda').fila - 3][1]; };
+  assert.equal(valor(), false);
+  assert.equal(valor(EJEMPLO), true);
+  assert.match(formulasListas().find((l) => l.nombre === 'ListaMonedas').formula, /CfgUsarSegunda/);
+});
