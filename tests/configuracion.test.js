@@ -4,10 +4,11 @@ const vm = require('node:vm');
 const { cargar } = require('./cargar');
 
 const ctx = cargar('config.js', 'ejemplo.js', 'hojas/configuracion.js', 'hojas/listas.js');
-const { EJEMPLO, CONFIG, disenoConfiguracion, formulasListas } =
-  vm.runInContext('({ EJEMPLO, CONFIG, disenoConfiguracion, formulasListas })', ctx);
+const { EJEMPLO, disenoConfiguracion, formulasListas } = vm.runInContext('({ EJEMPLO, disenoConfiguracion, formulasListas })', ctx);
+const nombres = () => disenoConfiguracion().flatMap((t) => t.rangos.map((r) => r.nombre));
+const ACOTADO = /(?:Gastos|Ingresos)!\$?[A-Z]+\$?\d+:\$?[A-Z]+\$?\d+/;
 
-test.skip('las tablas de Configuración no se pisan: una columna libre entre tablas', () => {
+test('las tablas de Configuración no se pisan: una columna libre entre tablas', () => {
   const tablas = disenoConfiguracion(EJEMPLO);
   for (let i = 1; i < tablas.length; i++) {
     const previa = tablas[i - 1];
@@ -15,46 +16,50 @@ test.skip('las tablas de Configuración no se pisan: una columna libre entre tab
   }
 });
 
-test.skip('con ejemplo, Categorías trae las filas del ejemplo en orden de columnas', () => {
-  const cat = disenoConfiguracion(EJEMPLO).find((t) => t.clave === 'Categorias');
-  assert.deepEqual([...cat.encabezados], ['Grupo', 'Categoría', 'Tipo', 'Comportamiento', 'Activa']);
-  assert.equal(cat.filas.length, EJEMPLO.config.categorias.length);
-  assert.deepEqual([...cat.filas[0]], ['Casa', 'Arriendo', 'E', 'fija', true]);
-});
-
-test.skip('sin datos usa los valores por defecto, con las subcategorías hormiga marcadas', () => {
-  const tablas = disenoConfiguracion();
-  const sub = tablas.find((t) => t.clave === 'Subcategorias');
-  const marcadas = sub.filas.filter((f) => f[3] === true).map((f) => f[1]);
-  assert.deepEqual([...marcadas].sort(), ['Café', 'Comisiones bancarias', 'Compras por impulso', 'Domicilios',
-    'Propinas', 'Snacks y golosinas', 'Taxi y apps de transporte']);
-  const hormiga = tablas.find((t) => t.clave === 'Hormiga');
-  assert.deepEqual([...hormiga.filas[0]], [30000, 3, 3]);
-});
-
-test.skip('toda subcategoría por defecto pertenece a una categoría por defecto', () => {
-  const tablas = disenoConfiguracion();
-  const cats = new Set(tablas.find((t) => t.clave === 'Categorias').filas.map((f) => f[1]));
-  for (const f of tablas.find((t) => t.clave === 'Subcategorias').filas) assert.ok(cats.has(f[0]), f[0]);
-});
-
-test.skip('los nombres de rango de Configuración son únicos e incluyen los de Hormiga', () => {
-  const nombres = disenoConfiguracion().flatMap((t) => t.rangos.map((r) => r.nombre));
-  assert.equal(new Set(nombres).size, nombres.length);
-  for (const n of ['HormigaMonto', 'HormigaComprasMes', 'HormigaMeses', 'CfgCategoriasActiva', 'CfgSubcategoriasHormiga']) {
-    assert.ok(nombres.includes(n), n);
+test('Configuración define los rangos con nombre del contrato, sin repetir', () => {
+  const n = nombres();
+  assert.equal(new Set(n).size, n.length);
+  for (const x of ['CfgNombre', 'CfgAno', 'CfgMesInicio', 'CfgMoneda', 'CfgSegundaMoneda', 'CfgCopiar',
+    'CfgPersonasNombre', 'CfgPersonasActiva', 'CfgFormasPagoNombre', 'CfgFormasPagoActiva',
+    'CfgTiposLetra', 'CfgTiposNombre', 'CfgTiposMeta', 'CfgGruposNombre', 'CfgGruposOrden', 'CfgGruposActivo']) {
+    assert.ok(n.includes(x), x);
   }
 });
 
-test.skip('las fórmulas de _Listas solo usan rangos definidos en Configuración', () => {
-  const definidos = new Set(disenoConfiguracion().flatMap((t) => t.rangos.map((r) => r.nombre)));
+test('la tabla General guarda un valor por celda con nombre', () => {
+  const general = disenoConfiguracion(EJEMPLO).find((t) => t.clave === 'General');
+  const valor = (nombre) => {
+    const r = general.rangos.find((x) => x.nombre === nombre);
+    assert.ok(r.unaCelda);
+    return general.filas[r.fila - 3][1];
+  };
+  assert.equal(valor('CfgNombre'), 'Familia Prueba');
+  assert.equal(valor('CfgAno'), 2026);
+  assert.equal(valor('CfgCopiar'), true);
+  assert.equal(valor('CfgSegundaMoneda'), 'USD');
+});
+
+test('con ejemplo, Grupos trae nombre, orden y activo', () => {
+  const g = disenoConfiguracion(EJEMPLO).find((t) => t.clave === 'Grupos');
+  assert.deepEqual([...g.encabezados], ['Grupo', 'Orden', 'Activo']);
+  assert.deepEqual([...g.filas[2]], ['Diversión', 3, true]);
+});
+
+test('_Listas define las listas de las grillas y del Panel', () => {
+  assert.deepEqual([...formulasListas().map((l) => l.nombre)].sort(), ['ListaFormasPago', 'ListaGastosPadre', 'ListaGrupos',
+    'ListaMesesAno', 'ListaMesesPanel', 'ListaMonedas', 'ListaPersonas', 'ListaTipos'].sort());
+});
+
+test('las fórmulas de _Listas usan rangos definidos y referencias abiertas', () => {
+  const definidos = new Set(nombres());
   for (const { nombre, formula } of formulasListas()) {
     for (const usado of formula.match(/\bCfg[A-Za-z]+\b/g) || []) assert.ok(definidos.has(usado), `${nombre}: ${usado}`);
+    assert.doesNotMatch(formula, ACOTADO, nombre);
   }
 });
 
-test.skip('_Listas define las listas de las pestañas de datos y el selector de mes', () => {
-  const nombres = formulasListas().map((l) => l.nombre);
-  assert.deepEqual([...nombres].sort(), ['ListaCategorias', 'ListaFormasPago', 'ListaMeses', 'ListaMonedas', 'ListaPersonas',
-    'ListaPersonasHogar', 'ListaSubcategorias', 'ListaTarjetas', 'ListaTiendas', 'MonedaPrincipal'].sort());
+test('los meses del año salen de la Configuración y el Panel ofrece "Mes actual"', () => {
+  const f = (n) => formulasListas().find((l) => l.nombre === n).formula;
+  assert.equal((f('ListaMesesAno').match(/DATE\(CfgAno,CfgMesInicio\+\d+,1\)/g) || []).length, 12);
+  assert.match(f('ListaMesesPanel'), /^=\{"Mes actual";DATE\(CfgAno,CfgMesInicio\+0,1\);/);
 });
