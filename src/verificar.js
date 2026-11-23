@@ -22,11 +22,11 @@ function compararFilas(donde, reales, esperadas, anotar) {
 }
 
 /** Compara el Panel con el oráculo para el mes i; agrega a `diferencias` cada valor que no coincide. */
-function compararMes(ss, i, hoy, diferencias) {
-  const { ano, mesInicio, segundaMoneda } = EJEMPLO.config.general;
+function compararMes(ss, datos, i, hoy, diferencias) {
+  const { ano, mesInicio, segundaMoneda } = datos.config.general;
   ss.getRangeByName('PanelMes').setValue(new Date(ano, mesInicio - 1 + i, 1));
   SpreadsheetApp.flush();
-  const m = calcularMes(EJEMPLO, i, hoy);
+  const m = calcularMes(datos, i, hoy);
   const anotar = (donde, real, esp) => {
     if (!iguales(real, esp)) diferencias.push(`mes ${i} ${donde}: planilla=${real} oráculo=${esp}`);
   };
@@ -44,7 +44,7 @@ function compararMes(ss, i, hoy, diferencias) {
   compararFilas('PanelIngresosMes', ss.getRangeByName('PanelIngresosMes').getValues(), [
     ['Planeado', m.ingresos.planeado], ['Llegó', m.ingresos.hayReal ? m.ingresos.real : ''],
     ['Diferencia', m.ingresos.diferencia]], anotar);
-  compararFilas('PanelTasa', ss.getRangeByName('PanelTasa').getValues(), EJEMPLO.config.general.usarSegunda ? [
+  compararFilas('PanelTasa', ss.getRangeByName('PanelTasa').getValues(), datos.config.general.usarSegunda ? [
     ['Tasa para planear', m.ingresos.tasaPlan === null ? 'falta' : m.ingresos.tasaPlan],
     ['Tasa real', m.ingresos.tasaReal === null ? 'pendiente' : m.ingresos.tasaReal],
     ['Diferencia por la tasa', m.ingresos.diferenciaTasa]] : [['', ''], ['', ''], ['', '']], anotar);
@@ -61,7 +61,7 @@ function compararMes(ss, i, hoy, diferencias) {
   for (const forma of FORMAS_VERIFICADAS) {
     ss.getRangeByName('PanelFormaPago').setValue(forma);
     SpreadsheetApp.flush();
-    const e = calcularFormaPago(EJEMPLO, i, forma);
+    const e = calcularFormaPago(datos, i, forma);
     compararFilas(`PanelFormaPagoTabla ${forma}`, filasDe(ss, 'PanelFormaPagoTabla'), [
       ...e.filas.map((f) => [f.persona, f.presupuestado, f.gastado, f.falta]),
       ['Total', e.total.presupuestado, e.total.gastado, e.total.falta]], anotar);
@@ -72,8 +72,18 @@ function compararMes(ss, i, hoy, diferencias) {
 
 /** Genera la planilla de ejemplo y compara el Panel con el oráculo mes a mes. */
 function verificarPanel() {
+  return verificarCon(EJEMPLO, MESES_VERIFICADOS, `Verificación ${CONFIG.VERSION}`);
+}
+
+/** Genera una planilla con los datos de la familia y compara el Panel con el oráculo de enero a noviembre. */
+function verificarFamilia() {
+  return verificarCon(datosFamilia(), Array.from({ length: 11 }, (_, i) => i), `Verificación familia ${CONFIG.VERSION}`);
+}
+
+/** Genera una planilla con `datos` y compara su Panel con el oráculo en los meses dados. */
+function verificarCon(datos, meses, nombre) {
   const inicio = Date.now();
-  const ss = SpreadsheetApp.openByUrl(generarPlantilla({ nombre: `Verificación ${CONFIG.VERSION}`, conEjemplo: true }));
+  const ss = SpreadsheetApp.openByUrl(generarPlantilla({ nombre, datos }));
   const generada = Date.now();
   const diferencias = [];
   const hoy = new Date();
@@ -82,13 +92,13 @@ function verificarPanel() {
   const validaciones = selectores.map((r) => r.getDataValidation());
   const valores = selectores.map((r) => r.getValue());
   selectores.forEach((r) => r.clearDataValidations());
-  MESES_VERIFICADOS.forEach((i) => compararMes(ss, i, hoy, diferencias));
+  meses.forEach((i) => compararMes(ss, datos, i, hoy, diferencias));
   selectores.forEach((r, k) => r.setValue(valores[k]).setDataValidation(validaciones[k]));
   const resultado = { ok: diferencias.length === 0, diferencias };
   Logger.log([
     `URL: ${ss.getUrl()}`,
     `Generación: ${((generada - inicio) / 1000).toFixed(1)} s; verificación: ${((Date.now() - generada) / 1000).toFixed(1)} s`,
-    `Meses verificados: ${MESES_VERIFICADOS.join(', ')}; formas de pago: ${FORMAS_VERIFICADAS.join(', ')}`,
+    `Meses verificados: ${meses.join(', ')}; formas de pago: ${FORMAS_VERIFICADAS.join(', ')}`,
     resultado.ok ? 'OK: el Panel coincide con el oráculo' : `Diferencias (${diferencias.length}):\n${diferencias.join('\n')}`,
   ].join('\n'));
   return resultado;
