@@ -141,3 +141,12 @@ test('borrador: pares Efectivo/Digital agrupados y desglose por título', () => 
   assert.equal(b.grupos.CASA, 'CASA');
   assert.equal(b.general.ano, 2026);
 });
+
+test('una forma de pago con presupuesto 0 no crea parte', () => {
+  const m = meses();
+  m[0].renglones.push(r('CASA', 'Suscripciones Efectivo', 'Luis', 'Efectivo', 0, null));
+  m[0].desgloses.Suscripciones = [];
+  const tabla = { ...TABLA, gastos: TABLA.gastos.map((g) => (g.gasto === 'Suscripciones' ? { ...g, de: ['Suscripciones Efectivo', 'Suscripciones Digital'] } : g)) };
+  const datos = convertir(m, tabla);
+  assert.deepEqual(datos.gastos.filter((g) => g.parteDe === 'Suscripciones').map((g) => g.gasto), ['Digital', 'Video', 'Sin detallar']);
+});

@@ -66,7 +66,7 @@ function partesDelMes(m, i, e, renglones) {
     }
     return partes;
   }
-  return unicos(renglones.map((r) => r.pago)).map((pago) => ({
+  return unicos(renglones.filter((r) => r.presupuesto).map((r) => r.pago)).map((pago) => ({
     parte: pago, pago, persona: personaDe(pago),
     valor: sumar(renglones.filter((r) => r.pago === pago).map((r) => r.presupuesto || 0)),
   }));
