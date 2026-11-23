@@ -59,3 +59,7 @@ test('validaciones de las columnas fijas', () => {
   assert.equal(de(7).lista, 'ListaFormasPago');
   assert.deepEqual(de(1), { columna: 1, formula: '=COUNTIFS($A$3:$A,$A3,$C$3:$C,"")<=1', soloAviso: true });
 });
+
+test('el real de una parte huérfana (Propinas) se escribe: cuenta como gasto propio', () => {
+  assert.equal(celdaDe(disenoGastos(EJEMPLO), 12, 9).valor, 50000);
+});

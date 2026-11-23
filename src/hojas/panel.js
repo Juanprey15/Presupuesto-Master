@@ -3,7 +3,7 @@
  * calcularFormaPago (oraculo.js) y se escriben en sintaxis en_US.
  */
 
-const FILA_TABLA = 11;
+const FILA_TABLA = 12;
 const FILAS_TABLA = CONFIG.FILAS_GASTOS;
 const ULTIMA_FILA_TABLA = FILA_TABLA + FILAS_TABLA - 1;
 const MESES_CONSTANTE = `{${Array.from({ length: CONFIG.MESES }, (_, k) => k).join(';')}}`;
@@ -115,134 +115,142 @@ function formulaAno(cual) {
 
 function formulaBarra(fila) {
   const { primary, warn } = CONFIG.PALETA;
-  return `=IF(B${fila}="","",SPARKLINE(MIN(F${fila},1),{"charttype","bar";"max",1;` +
-    `"color1",IF(F${fila}>1,"${warn}","${primary}")}))`;
+  return `=IF(C${fila}="","",SPARKLINE(MIN(AG${fila},1),{"charttype","bar";"max",1;` +
+    `"color1",IF(OR(H${fila}="Excedido",H${fila}="Va rápido"),"${warn}","${primary}")}))`;
 }
 
-/** Celdas del Panel: posición, rango con nombre (y su tamaño), fórmula o valor y, en los selectores, su lista. */
+/**
+ * Celdas del Panel: posición, rango con nombre (y su tamaño), fórmula o valor y, en los selectores, su lista.
+ * Lo visible sigue el boceto aprobado: tabla en B:H y recuadros en J:N. Los cálculos viven en columnas
+ * ocultas (Z: auxiliares; AB:AH: tabla del mes; AJ:AL: año) y las columnas visibles los muestran.
+ */
 function disenoPanel(datos) {
   const f = FILA_TABLA;
+  const u = ULTIMA_FILA_TABLA;
   const formas = (datos ? datos.config : CONFIG.DEFECTOS).formasPago.filter((x) => x.activa);
   const { accent } = CONFIG.PALETA;
   const celdas = [
-    { a1: 'A1', formula: '=CfgNombre' },
-    { a1: 'A2', formula: '="Presupuesto "&CfgAno' },
-    { a1: 'H1', valor: 'Mes' },
-    { a1: 'I1', nombre: 'PanelMes', valor: 'Mes actual', lista: 'ListaMesesPanel' },
-    { a1: 'H2', formula: formulaDia() },
-    { a1: 'A3', formula: `=SPARKLINE(PanelFraccion,{"charttype","bar";"max",1;"color1","${accent}"})` },
+    { a1: 'B1', formula: '=CfgNombre' },
+    { a1: 'B2', formula: '="Presupuesto "&CfgAno' },
+    { a1: 'K1', valor: 'Mes' },
+    { a1: 'L1', nombre: 'PanelMes', valor: 'Mes actual', lista: 'ListaMesesPanel' },
+    { a1: 'B3', formula: `=SPARKLINE(PanelFraccion,{"charttype","bar";"max",1;"color1","${accent}"})` },
+    { a1: 'B4', formula: formulaDia() },
     { a1: 'Z1', nombre: 'PanelIndice', formula: formulaIndice() },
     { a1: 'Z2', nombre: 'PanelMesInicio', formula: '=DATE(CfgAno,CfgMesInicio+PanelIndice,1)' },
     { a1: 'Z3', nombre: 'PanelFraccion', formula: formulaFraccion() },
     { a1: 'Z5', nombre: 'PanelIngresosCalc', filas: 10, formula: formulaIngresosCalc() },
+    { a1: 'Z16', nombre: 'PanelPresupuestado', formula: '=SUM(AD12:AD)' },
+    { a1: 'Z17', nombre: 'PanelSinAsignar', formula: `=${calc(1)}-PanelPresupuestado` },
+    { a1: 'Z18', nombre: 'PanelSinAsignarEtiqueta', formula: '=IF(PanelSinAsignar<0,"Sobre-asignado","Sin asignar")' },
 
-    { a1: 'A5', nombre: 'PanelIngresosEtiqueta', formula: `=IF(${calc(3)},"Ingresos","Ingresos (planeados)")` },
-    { a1: 'A6', nombre: 'PanelIngresos', formula: `=IF(${calc(3)},${calc(2)},${calc(1)})` },
-    { a1: 'C5', valor: 'Gastado hasta hoy' },
-    { a1: 'C6', nombre: 'PanelGastado', formula: `=SUM(D${f}:D)` },
-    { a1: 'E5', valor: 'Queda del presupuesto' },
-    { a1: 'E6', nombre: 'PanelQueda', formula: '=PanelPresupuestado-PanelGastado' },
-    { a1: 'A7', valor: 'Presupuestado' },
-    { a1: 'B7', nombre: 'PanelPresupuestado', formula: `=SUM(C${f}:C)` },
-    { a1: 'C7', nombre: 'PanelSinAsignarEtiqueta', formula: '=IF(PanelSinAsignar<0,"Sobre-asignado","Sin asignar")' },
-    { a1: 'E7', nombre: 'PanelSinAsignar', formula: `=${calc(1)}-PanelPresupuestado` },
+    { a1: 'B6', nombre: 'PanelIngresosEtiqueta', formula: `=IF(${calc(3)},"Ingresos","Ingresos (planeados)")` },
+    { a1: 'B7', nombre: 'PanelIngresos', formula: `=IF(${calc(3)},${calc(2)},${calc(1)})` },
+    { a1: 'D6', valor: 'Gastado hasta hoy' },
+    { a1: 'D7', nombre: 'PanelGastado', formula: '=SUM(AE12:AE)' },
+    { a1: 'F6', valor: 'Queda del presupuesto' },
+    { a1: 'F7', nombre: 'PanelQueda', formula: '=PanelPresupuestado-PanelGastado' },
+    { a1: 'B8', formula: '="Presupuestado "&TEXT(PanelPresupuestado,"#,##0")&". "&PanelSinAsignarEtiqueta&' +
+      '" (ingresos menos presupuesto): "&TEXT(ABS(PanelSinAsignar),"#,##0")&"."' },
 
-    { a1: 'A9', valor: 'Presupuestado contra real' },
-    { a1: `A${f}`, nombre: 'PanelTabla', filas: FILAS_TABLA, columnas: 7, formula: formulaTabla() },
+    { a1: 'B10', valor: 'Presupuestado contra real' },
+    { a1: `AB${f}`, nombre: 'PanelTabla', filas: FILAS_TABLA, columnas: 7, formula: formulaTabla() },
+    { a1: `B${f}`, formula: `=ARRAYFORMULA(IF(AB${f}:AB${u}="","",IF(AB${f}:AB${u}=AB${f - 1}:AB${u - 1},"",AB${f}:AB${u})))` },
+    { a1: `C${f}`, formula: `=ARRAYFORMULA(IF(AC${f}:AC${u}="","",AC${f}:AF${u}))` },
+    { a1: `H${f}`, formula: `=ARRAYFORMULA(IF(AC${f}:AC${u}="","",AH${f}:AH${u}))` },
 
-    { a1: 'J5', valor: 'Forma de pago' },
-    { a1: 'K5', nombre: 'PanelFormaPago', valor: formas.length ? formas[0].nombre : '', lista: 'ListaFormasPago' },
-    { a1: 'J6', nombre: 'PanelFormaPagoNota', formula: formulaFormaPagoNota() },
-    { a1: 'J8', nombre: 'PanelFormaPagoTabla', filas: 13, columnas: 4, formula: formulaFormaPago() },
-    { a1: 'J22', valor: 'Ingresos del mes' },
-    { a1: 'J23', nombre: 'PanelTasa', filas: 2, columnas: 2,
+    { a1: 'J6', valor: 'Forma de pago' },
+    { a1: 'L6', nombre: 'PanelFormaPago', valor: formas.length ? formas[0].nombre : '', lista: 'ListaFormasPago' },
+    { a1: 'J7', nombre: 'PanelFormaPagoNota', formula: formulaFormaPagoNota() },
+    { a1: 'J9', nombre: 'PanelFormaPagoTabla', filas: 8, columnas: 4, formula: formulaFormaPago() },
+    { a1: 'J17', formula: '=IFERROR(INDEX(FILTER(K9:K16,J9:J16="Total"),1),"")' },
+    { a1: 'J18', formula: '=IF(PanelFormaPago="Efectivo","es lo que hay que sacar del cajero este mes",' +
+      '"es lo presupuestado con "&PanelFormaPago&" este mes")' },
+    { a1: 'J20', valor: 'Ingresos del mes' },
+    { a1: 'J21', nombre: 'PanelTasa', filas: 2, columnas: 2,
       formula: `={"Tasa para planear",IF(${calc(4)}="","falta",${calc(4)});"Tasa real",IF(${calc(5)}="","pendiente",${calc(5)})}` },
-    { a1: 'J25', nombre: 'PanelIngresosMes', filas: 3, columnas: 2,
+    { a1: 'J23', nombre: 'PanelIngresosMes', filas: 3, columnas: 2,
       formula: `={"Planeado",${calc(1)};"Llegó",IF(${calc(3)},${calc(2)},"");"Diferencia por la tasa",${calc(7)}}` },
-    { a1: 'J28', nombre: 'PanelAvisoTasa',
+    { a1: 'J26', nombre: 'PanelAvisoTasa',
       formula: `=IF(${calc(8)},"Falta la tasa para planear",IF(${calc(6)}>0,"Faltan "&CfgSegundaMoneda&" "&TEXT(${calc(6)},"#,##0")&" por cambiar",""))` },
-    { a1: 'J30', valor: 'Reparto contra la meta' },
-    { a1: 'J32', nombre: 'PanelTipos', filas: 10, columnas: 5, formula: formulaTipos() },
-    { a1: 'J43', valor: 'Por persona' },
-    { a1: 'J45', nombre: 'PanelPersonas', filas: 12, columnas: 4, formula: formulaPersonas() },
-    { a1: 'P9', valor: 'El año de un vistazo' },
-    { a1: 'P11', nombre: 'PanelAno', filas: CONFIG.MESES, columnas: 3,
+    { a1: 'J28', valor: 'Reparto contra la meta' },
+    { a1: 'J30', nombre: 'PanelTipos', filas: 6, columnas: 5, formula: formulaTipos() },
+    { a1: 'J37', valor: 'Por persona' },
+    { a1: 'J39', nombre: 'PanelPersonas', filas: 8, columnas: 4, formula: formulaPersonas() },
+    { a1: 'J48', valor: 'El año de un vistazo' },
+    { a1: 'AJ11', nombre: 'PanelAno', filas: CONFIG.MESES, columnas: 3,
       formula: `={${Array.from({ length: CONFIG.MESES }, (_, k) => `DATE(CfgAno,CfgMesInicio+${k},1)`).join(';')}}` },
-    { a1: 'Q11', formula: formulaAno('presupuestado') },
-    { a1: 'R11', formula: formulaAno('real') },
+    { a1: 'AK11', formula: formulaAno('presupuestado') },
+    { a1: 'AL11', formula: formulaAno('real') },
   ];
   const encabezados = [
-    [`A${f - 1}`, ['Grupo', 'Gasto', 'Presupuestado', 'Real', 'Diferencia', 'Avance', 'Estado']],
-    ['J7', ['Persona', 'Presupuestado', 'Gastado', 'Falta']],
-    ['J31', ['Tipo', 'Nombre', 'Real', '% del ingreso', 'Meta']],
-    ['J44', ['Persona', 'Ingresa', 'Presupuesta', 'Le queda']],
-    ['P10', ['Mes', 'Presupuestado', 'Real']],
+    [`B${f - 1}`, ['Grupo', 'Gasto', 'Presupuestado', 'Real', 'Diferencia', 'Avance', 'Estado']],
+    ['J8', ['Persona', 'Presupuestado', 'Gastado', 'Falta']],
+    ['J29', ['Tipo', 'Nombre', 'Real', '% del ingreso', 'Meta']],
+    ['J38', ['Persona', 'Ingresa', 'Presupuesta', 'Le queda']],
+    ['AJ10', ['Mes', 'Presupuestado', 'Real']],
   ];
   for (const [inicio, titulos] of encabezados) {
     const [, col, fila] = inicio.match(/^([A-Z]+)(\d+)$/);
-    titulos.forEach((valor, k) => celdas.push({ a1: `${String.fromCharCode(col.charCodeAt(0) + k)}${fila}`, valor, encabezado: true }));
+    const n = [...col].reduce((a, c) => a * 26 + c.charCodeAt(0) - 64, 0);
+    titulos.forEach((valor, k) => celdas.push({ a1: `${letra(n + k)}${fila}`, valor, encabezado: true }));
   }
-  for (let fila = f; fila <= ULTIMA_FILA_TABLA; fila++) celdas.push({ a1: `H${fila}`, formula: formulaBarra(fila) });
+  for (let fila = f; fila <= u; fila++) celdas.push({ a1: `G${fila}`, formula: formulaBarra(fila) });
   return { celdas };
 }
 
-/** Escribe el Panel con el formato del boceto aprobado. Requiere Configuración, _Listas, Gastos e Ingresos. */
+/** Escribe el Panel con la distribución del boceto aprobado. Requiere Configuración, _Listas, Gastos e Ingresos. */
 function construirPanel(ss, datos) {
   const sh = ss.getSheetByName(CONFIG.HOJAS.panel);
   const P = CONFIG.PALETA;
   const f = FILA_TABLA;
   const u = ULTIMA_FILA_TABLA;
   const numero = '#,##0';
+  const r = (a1) => sh.getRange(a1);
+  asegurarColumnas(sh, 38);
 
-  sh.getRange('A1:Z120').setFontFamily('Bricolage Grotesque').setFontColor(P.ink).setFontSize(10);
+  r(`A1:N${u}`).setFontFamily('Bricolage Grotesque').setFontColor(P.ink).setFontSize(10).setVerticalAlignment('middle');
   sh.setHiddenGridlines(true);
-  sh.getRange('I1').setNumberFormat('mmmm yyyy');
 
   for (const c of disenoPanel(datos).celdas) {
-    const r = sh.getRange(c.a1);
-    if (c.formula) r.setFormula(c.formula); else r.setValue(c.valor);
-    if (c.encabezado) r.setFontColor(P.muted).setFontWeight('bold');
-    if (c.nombre) ss.setNamedRange(c.nombre, sh.getRange(r.getRow(), r.getColumn(), c.filas || 1, c.columnas || 1));
+    const celda = r(c.a1);
+    if (c.formula) celda.setFormula(c.formula); else celda.setValue(c.valor);
+    if (c.encabezado) celda.setFontColor(P.muted).setFontWeight('bold');
+    if (c.nombre) ss.setNamedRange(c.nombre, sh.getRange(celda.getRow(), celda.getColumn(), c.filas || 1, c.columnas || 1));
     if (c.lista) {
-      r.setDataValidation(SpreadsheetApp.newDataValidation()
+      celda.setDataValidation(SpreadsheetApp.newDataValidation()
         .requireValueInRange(ss.getRangeByName(c.lista), true).setAllowInvalid(false).build());
     }
   }
 
-  sh.getRange('A1:Z2').setBackground(P.deep).setFontColor(P.ground);
-  sh.getRange('A1').setFontSize(20).setFontWeight('bold');
-  sh.getRange('I1').setBackground(P.surface).setFontColor(P.ink).setFontWeight('bold');
-  sh.getRange('A3:G3').merge();
-  sh.setRowHeight(1, 40);
+  // Cabecera oscura: nombre, año, selector de mes y avance del mes.
+  r('A1:N4').setBackground(P.deep).setFontColor(P.line);
+  r('B1').setFontSize(22).setFontWeight('bold').setFontColor(P.surface);
+  r('K1').setHorizontalAlignment('right').setFontWeight('bold');
+  r('L1:N1').merge().setBackground(P.surface).setFontColor(P.ink).setFontWeight('bold').setNumberFormat('mmmm yyyy');
+  r('B3:N3').merge();
+  r('B4:H4').merge();
+  sh.setRowHeight(1, 44);
+  sh.setRowHeight(3, 12);
 
-  sh.getRange('A5:F5').setFontColor(P.muted).setFontSize(9);
-  sh.getRange('A6:F6').setFontSize(16).setFontWeight('bold').setNumberFormat(numero).setHorizontalAlignment('left');
-  sh.getRange('E5:F6').setBackground(P.primary).setFontColor(P.surface);
-  sh.getRange('A5:F6').setBorder(true, true, true, true, true, false, P.line, SpreadsheetApp.BorderStyle.SOLID);
-  sh.getRange('A7:E7').setFontColor(P.muted);
-  sh.getRange('B7').setNumberFormat(numero);
-  sh.getRange('E7').setNumberFormat(numero);
+  // Cifras grandes.
+  for (const par of ['B6:C6', 'B7:C7', 'D6:E6', 'D7:E7', 'F6:H6', 'F7:H7', 'B8:H8']) r(par).merge();
+  r('B6:H6').setFontColor(P.muted).setFontSize(9);
+  r('B7:H7').setFontSize(18).setFontWeight('bold').setNumberFormat(numero).setHorizontalAlignment('left');
+  r('F6:H7').setBackground(P.primary).setFontColor(P.surface);
+  r('B6:H7').setBorder(true, true, true, true, true, false, P.line, SpreadsheetApp.BorderStyle.SOLID);
+  r('B8').setFontColor(P.muted).setFontSize(9);
+  sh.setRowHeight(7, 34);
 
-  for (const t of ['A9', 'J5', 'J22', 'J30', 'J43', 'P9']) sh.getRange(t).setFontColor(P.primary).setFontWeight('bold').setFontSize(11);
-  sh.getRange(`A${f - 1}:H${f - 1}`).setBorder(null, null, true, null, null, null, P.line, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  sh.getRange(`C${f}:D${u}`).setNumberFormat(numero);
-  sh.getRange(`E${f}:E${u}`).setNumberFormat('"quedan "#,##0;"se pasó "#,##0;0');
-  sh.getRange(`F${f}:F${u}`).setNumberFormat('0%');
-  sh.getRange(`G${f}:G${u}`).setFontWeight('bold');
-  sh.getRange(`C${f - 1}:F${u}`).setHorizontalAlignment('right');
-
-  sh.getRange('J5:M20').setBackground(P.deep).setFontColor(P.ground);
-  sh.getRange('K5').setBackground(P.surface).setFontColor(P.ink).setFontWeight('bold');
-  sh.getRange('K8:M20').setNumberFormat(numero);
-  sh.getRange('J22:K28').setBackground(P.deep).setFontColor(P.ground);
-  sh.getRange('K23:K27').setNumberFormat(numero);
-  sh.getRange('L32:L41').setNumberFormat(numero);
-  sh.getRange('M32:N41').setNumberFormat('0%');
-  sh.getRange('K45:M56').setNumberFormat(numero);
-  sh.getRange('P11:P22').setNumberFormat('mmm');
-  sh.getRange('Q11:R22').setNumberFormat(numero);
-
-  const estados = sh.getRange(`G${f}:G${u}`);
+  // Tabla del mes.
+  for (const t of ['B10', 'J28', 'J37', 'J48']) r(t).setFontColor(P.primary).setFontWeight('bold').setFontSize(12);
+  r(`B${f - 1}:H${f - 1}`).setBorder(null, null, true, null, null, null, P.line, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  r(`D${f - 1}:F${u}`).setHorizontalAlignment('right');
+  r(`D${f}:E${u}`).setNumberFormat(numero);
+  r(`F${f}:F${u}`).setNumberFormat('"quedan "#,##0;"se pasó "#,##0;0');
+  r(`B${f}:B${u}`).setFontWeight('bold');
+  r(`H${f}:H${u}`).setFontWeight('bold');
+  const estados = r(`H${f}:H${u}`);
   const regla = (texto, color) => SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo(texto).setFontColor(color).setRanges([estados]).build();
   sh.setConditionalFormatRules([
@@ -251,12 +259,37 @@ function construirPanel(ss, datos) {
     ...['Pendiente', 'Pago parcial'].map((t) => regla(t, P.muted)),
   ]);
 
-  sh.insertChart(sh.newChart().setChartType(Charts.ChartType.COLUMN).addRange(sh.getRange('P10:R22'))
-    .setNumHeaders(1).setPosition(58, 10, 0, 0)
+  // Recuadros oscuros: forma de pago e ingresos.
+  for (const caja of ['J6:N18', 'J20:N26']) r(caja).setBackground(P.deep).setFontColor(P.ground);
+  for (const t of ['J6', 'J20']) r(t).setFontColor(P.surface).setFontWeight('bold').setFontSize(12);
+  r('L6:N6').merge().setBackground(P.surface).setFontColor(P.ink).setFontWeight('bold');
+  r('J7:N7').merge().setFontColor(P.line).setFontSize(9);
+  r('J8:M8').setFontColor(P.line);
+  r('K8:M16').setHorizontalAlignment('right');
+  r('K9:M16').setNumberFormat(numero);
+  r('J17:K17').merge().setFontSize(22).setFontWeight('bold').setFontColor(P.surface).setNumberFormat(numero).setHorizontalAlignment('left');
+  r('J18:N18').merge().setFontColor(P.line).setFontSize(9);
+  r('K21:K25').setNumberFormat(numero).setHorizontalAlignment('right');
+  r('J26:N26').merge().setFontWeight('bold').setFontColor(P.surface);
+  sh.setRowHeight(17, 34);
+
+  // Reparto y personas.
+  r('L29:N29').setHorizontalAlignment('right');
+  r('L30:L35').setNumberFormat(numero);
+  r('M30:N35').setNumberFormat('0%');
+  r('K38:M38').setHorizontalAlignment('right');
+  r('K39:M46').setNumberFormat(numero);
+
+  // Año: datos en columnas ocultas y gráfico a la derecha.
+  r('AJ11:AJ22').setNumberFormat('mmm');
+  r('AK11:AL22').setNumberFormat(numero);
+  sh.insertChart(sh.newChart().setChartType(Charts.ChartType.COLUMN).addRange(r('AJ10:AL22'))
+    .setNumHeaders(1).setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.SHOW_BOTH)
+    .setPosition(49, 10, 0, 0).setOption('width', 540).setOption('height', 260)
     .setOption('colors', [P.line, P.primary]).setOption('legend', { position: 'bottom' }).build());
 
-  [110, 170, 110, 110, 120, 70, 110, 120, 24, 130, 110, 110, 100, 80].forEach((ancho, i) => sh.setColumnWidth(i + 1, ancho));
-  sh.hideColumns(26);
-  sh.setFrozenRows(2);
+  [16, 100, 170, 110, 110, 125, 110, 105, 28, 160, 105, 105, 105, 60].forEach((ancho, i) => sh.setColumnWidth(i + 1, ancho));
+  sh.hideColumns(26, 13);
+  sh.setFrozenRows(4);
   sh.protect().setDescription('Panel: solo los selectores son editables').setWarningOnly(true);
 }

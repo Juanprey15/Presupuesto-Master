@@ -20,7 +20,6 @@ function formulaPresupuestoGasto(fila, col, colPrevia) {
 function disenoGastos(datos) {
   const claves = Object.keys(CONFIG.COLUMNAS.gastos);
   const gastos = datos ? datos.gastos : [];
-  const esParte = (g) => g.parteDe !== '';
   const filas = [];
   const celdas = [];
   for (let k = 0; k < CONFIG.FILAS_GASTOS; k++) {
@@ -33,7 +32,7 @@ function disenoGastos(datos) {
       celdas.push(presupuesto !== null
         ? { fila, columna: cp, valor: presupuesto }
         : { fila, columna: cp, formula: formulaPresupuestoGasto(fila, letra(cp), i > 0 ? letra(cp - 2) : null) });
-      if (real !== null && !esParte(g)) celdas.push({ fila, columna: cp + 1, valor: real });
+      if (real !== null) celdas.push({ fila, columna: cp + 1, valor: real });
     }
   }
   return {

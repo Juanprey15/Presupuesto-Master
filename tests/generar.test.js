@@ -44,7 +44,7 @@ function generarCon(opciones) {
   const ctx = cargar(...ARCHIVOS);
   const { SpreadsheetApp, registro } = falsoSpreadsheetApp();
   ctx.SpreadsheetApp = SpreadsheetApp;
-  ctx.Charts = { ChartType: { COLUMN: 'COLUMN' } };
+  ctx.Charts = { ChartType: { COLUMN: 'COLUMN' }, ChartHiddenDimensionStrategy: { SHOW_BOTH: 'SHOW_BOTH' } };
   ctx.generarPlantilla(opciones);
   return { ctx, registro };
 }
