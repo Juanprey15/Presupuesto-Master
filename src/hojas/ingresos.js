@@ -70,6 +70,7 @@ function construirIngresos(ss, datos) {
   const P = CONFIG.PALETA;
   const f0 = CONFIG.FILA_DATOS;
   const diseno = disenoIngresos(datos);
+  asegurarColumnas(sh, COLUMNA_CAMBIOS + diseno.cambios.encabezados.length - 1);
   escribirGrilla(ss, sh, diseno, PRIMERA_COLUMNA_INGRESOS);
   sh.getRange(f0, 1, 1, PRIMERA_COLUMNA_INGRESOS + 2 * CONFIG.MESES - 1).setBackground(P.ground).setFontStyle('italic');
 

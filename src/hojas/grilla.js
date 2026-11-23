@@ -18,6 +18,12 @@ function formulaEncabezadoMes(i) {
   return `=DATE(CfgAno,CfgMesInicio+${i},1)`;
 }
 
+/** Agrega columnas al final de la hoja hasta tener al menos `n` (una hoja nueva trae 26). */
+function asegurarColumnas(sh, n) {
+  const actuales = sh.getMaxColumns();
+  if (actuales < n) sh.insertColumnsAfter(actuales, n - actuales);
+}
+
 /** Bloque de celdas de los meses como matriz para setValues (las fórmulas empiezan con "="). */
 function matrizMeses(celdas, primera, filaInicial, filas) {
   const m = Array.from({ length: filas }, () => Array(2 * CONFIG.MESES).fill(''));
@@ -35,6 +41,7 @@ function escribirGrilla(ss, sh, diseno, primera) {
   const filas = diseno.filas.length;
   const fijas = diseno.encabezados.length;
   const ultimaCol = primera + 2 * CONFIG.MESES - 1;
+  asegurarColumnas(sh, ultimaCol);
 
   sh.getRange(2, 1, 1, fijas).setValues([diseno.encabezados]);
   for (let i = 0; i < CONFIG.MESES; i++) {
