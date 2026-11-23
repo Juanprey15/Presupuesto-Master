@@ -10,9 +10,11 @@ const FILAS_CAMBIOS = 100;
 /** Tasa real del mes i: promedio ponderado de los cambios de ese mes (vacía si no hay). */
 function formulaTasaReal(i) {
   const L = (k) => letra(COLUMNA_CAMBIOS + k);
-  const mes = `DATE(CfgAno,CfgMesInicio+${i},1)`;
+  const desde = `">="&DATE(CfgAno,CfgMesInicio+${i},1)`;
+  const hasta = `"<"&DATE(CfgAno,CfgMesInicio+${i + 1},1)`;
   const col = (k) => `$${L(k)}$3:$${L(k)}`;
-  return `=IFERROR(SUMIF(${col(0)},${mes},${col(4)})/SUMIF(${col(0)},${mes},${col(2)}),"")`;
+  const suma = (k) => `SUMIFS(${col(k)},${col(0)},${desde},${col(0)},${hasta},${col(3)},"<>")`;
+  return `=IFERROR(${suma(4)}/${suma(2)},"")`;
 }
 
 /** Diseño de Ingresos; sin `datos`, las filas quedan vacías con sus fórmulas. */

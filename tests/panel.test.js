@@ -72,3 +72,19 @@ test('avisos de la tasa y del gastado sin contar', () => {
   assert.ok(formulaDe('PanelFormaPagoNota').includes('"Gastado sin contar: "'));
   assert.ok(formulaDe('PanelSinAsignarEtiqueta').includes('"Sobre-asignado"'));
 });
+
+test('los totales suman la tabla entera, sin fila final', () => {
+  assert.equal(formulaDe('PanelGastado'), '=SUM(D11:D)');
+  assert.equal(formulaDe('PanelPresupuestado'), '=SUM(C11:C)');
+});
+
+test('forma de pago con fila "Sin persona" y tolerancia desde Configuración', () => {
+  assert.ok(formulaDe('PanelFormaPagoTabla').includes('"Sin persona"'));
+  assert.ok(formulaDe('PanelTabla').includes('CfgTolerancia'));
+});
+
+test('un cambio cuenta en su mes aunque la fecha no sea el día 1', () => {
+  const f = formulaDe('PanelIngresosCalc');
+  assert.ok(f.includes('(cmes>=ini)*(cmes<EDATE(ini,1))'));
+  assert.ok(!f.includes('cmes=ini'));
+});

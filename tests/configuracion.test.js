@@ -63,3 +63,7 @@ test('los meses del año salen de la Configuración y el Panel ofrece "Mes actua
   assert.equal((f('ListaMesesAno').match(/DATE\(CfgAno,CfgMesInicio\+\d+,1\)/g) || []).length, 12);
   assert.match(f('ListaMesesPanel'), /^=\{"Mes actual";DATE\(CfgAno,CfgMesInicio\+0,1\);/);
 });
+
+test('la tolerancia de "va rápido" es una celda de Configuración', () => {
+  assert.ok(nombres().includes('CfgTolerancia'));
+});

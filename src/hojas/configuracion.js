@@ -10,6 +10,7 @@ const FILAS_GENERAL = [
   ['Moneda', 'moneda', 'CfgMoneda'],
   ['Segunda moneda (ingresos)', 'segundaMoneda', 'CfgSegundaMoneda'],
   ['Copiar el presupuesto al mes siguiente', 'copiar', 'CfgCopiar'],
+  ['Va rápido si el avance supera al del mes en', 'tolerancia', 'CfgTolerancia'],
 ];
 
 function tablasConfiguracion() {
@@ -69,6 +70,7 @@ function construirConfiguracion(ss, datos) {
   celda('CfgMesInicio').setDataValidation(SpreadsheetApp.newDataValidation()
     .requireNumberBetween(1, 12).setAllowInvalid(false).build());
   celda('CfgAno').setNumberFormat('0');
+  celda('CfgTolerancia').setNumberFormat('0%');
   sh.setColumnWidth(1, 260);
   sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).setFontFamily('Bricolage Grotesque');
   sh.setFrozenRows(2);

@@ -48,12 +48,12 @@ function fraccionDelMes(datos, i, hoy) {
   return hoy.getDate() / new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
 }
 
-function estadoDe(comportamiento, presupuesto, real, fraccion) {
+function estadoDe(comportamiento, presupuesto, real, fraccion, tolerancia) {
   if (real === null) return 'Pendiente';
   if (real > presupuesto) return 'Excedido';
   if (real === presupuesto) return 'Pagado';
   if (comportamiento !== 'variable') return 'Pago parcial';
-  return presupuesto > 0 && real / presupuesto > fraccion + CONFIG.TOLERANCIA_RITMO ? 'Va rápido' : 'En ritmo';
+  return presupuesto > 0 && real / presupuesto > fraccion + tolerancia ? 'Va rápido' : 'En ritmo';
 }
 
 /** Gastos que forman filas del Panel: los que no son partes (una parte huérfana cuenta como gasto propio). */
@@ -106,7 +106,7 @@ function filasDelMes(datos, i, fraccion) {
         indice, tipo: g.tipo, grupo: orden.has(g.grupo) ? g.grupo : SIN_GRUPO, gasto: g.gasto,
         presupuesto, real, diferencia: presupuesto - (real || 0),
         avance: presupuesto > 0 ? (real || 0) / presupuesto : 0,
-        estado: estadoDe(g.comportamiento, presupuesto, real, fraccion),
+        estado: estadoDe(g.comportamiento, presupuesto, real, fraccion, datos.config.general.tolerancia ?? CONFIG.TOLERANCIA_RITMO),
       };
     })
     .filter((f) => f.presupuesto > 0 || f.real !== null)
@@ -148,11 +148,15 @@ function calcularFormaPago(datos, i, formaPago) {
   const sinPartes = gastosPropios(datos).filter((g) => !esPadre(datos, g) && g.pago === formaPago);
   const presupuestadoDe = (p) => sumar(conPresupuesto.filter((g) => g.persona === p).map((g) => presupuestoEfectivo(datos, g, i)));
   const gastadoDe = (p) => sumar(sinPartes.filter((g) => g.persona === p).map((g) => numero(celda(g, i, 1)) || 0));
-  const filas = personasVisibles(datos, (p) => [presupuestadoDe(p), gastadoDe(p)]).map((p) => {
-    const presupuestado = presupuestadoDe(p.nombre);
-    const gastado = gastadoDe(p.nombre);
-    return { persona: p.nombre, presupuestado, gastado, falta: presupuestado - gastado };
-  });
+  const fila = (persona, presupuestado, gastado) => ({ persona, presupuestado, gastado, falta: presupuestado - gastado });
+  const filas = personasVisibles(datos, (p) => [presupuestadoDe(p), gastadoDe(p)])
+    .map((p) => fila(p.nombre, presupuestadoDe(p.nombre), gastadoDe(p.nombre)));
+  // Gastos con persona vacía o que ya no está en Configuración: no pueden faltar en lo que hay que sacar.
+  const conocidas = new Set(datos.config.personas.map((p) => p.nombre));
+  const sinPersona = (g) => !conocidas.has(g.persona);
+  const presupuestadoSin = sumar(conPresupuesto.filter(sinPersona).map((g) => presupuestoEfectivo(datos, g, i)));
+  const gastadoSin = sumar(sinPartes.filter(sinPersona).map((g) => numero(celda(g, i, 1)) || 0));
+  if (presupuestadoSin !== 0 || gastadoSin !== 0) filas.push(fila('Sin persona', presupuestadoSin, gastadoSin));
   const total = (k) => sumar(filas.map((f) => f[k]));
   return {
     filas,

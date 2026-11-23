@@ -4,7 +4,7 @@
  */
 
 const FILA_TABLA = 11;
-const FILAS_TABLA = 100;
+const FILAS_TABLA = CONFIG.FILAS_GASTOS;
 const ULTIMA_FILA_TABLA = FILA_TABLA + FILAS_TABLA - 1;
 const MESES_CONSTANTE = `{${Array.from({ length: CONFIG.MESES }, (_, k) => k).join(';')}}`;
 
@@ -48,7 +48,7 @@ function formulaTabla() {
     'grp,IF(conocido,fgr,"Sin grupo"),ord,IF(conocido,XLOOKUP(fgr,CfgGruposNombre,CfgGruposOrden,1000000),1000000),' +
     'est,MAP(fcm,pres,fre,fh,LAMBDA(comp,pre,rea,tiene,IF(NOT(tiene),"Pendiente",IF(rea>pre,"Excedido",' +
     'IF(rea=pre,"Pagado",IF(comp<>"variable","Pago parcial",' +
-    `IF(pre>0,IF(rea/pre>fr+${CONFIG.TOLERANCIA_RITMO},"Va rápido","En ritmo"),"En ritmo"))))))),` +
+    'IF(pre>0,IF(rea/pre>fr+CfgTolerancia,"Va rápido","En ritmo"),"En ritmo"))))))),' +
     'incl,(pres>0)+fh,' +
     'SORT(FILTER({grp,fn,pres,IF(fh,fre,""),pres-fre,IF(pres>0,fre/pres,0),est},incl>0),' +
     'FILTER(ord*100000+sq,incl>0),TRUE)),""))';
@@ -62,7 +62,7 @@ function formulaIngresosCalc() {
     'pp,IF(ISNUMBER(pr),pr,0),re,IF(ISNUMBER(rr),rr,0),usd,(fm=CfgSegundaMoneda)*(fm<>""),' +
     'tr,INDEX(Ingresos!$D$3:$AA,1,2*i+1),tieneTasa,ISNUMBER(tr),tasa,IF(tieneTasa,tr,0),' +
     'cmes,Ingresos!$AC$3:$AC,cd,Ingresos!$AE$3:$AE,ct,Ingresos!$AF$3:$AF,' +
-    'ok,(cmes=ini)*ISNUMBER(cd)*ISNUMBER(ct),dol,IF(ISNUMBER(cd),cd,0),tas,IF(ISNUMBER(ct),ct,0),' +
+    'ok,(cmes>=ini)*(cmes<EDATE(ini,1))*ISNUMBER(cd)*ISNUMBER(ct),dol,IF(ISNUMBER(cd),cd,0),tas,IF(ISNUMBER(ct),ct,0),' +
     'cambiados,SUMPRODUCT(ok*dol),pesos,SUMPRODUCT(ok*dol*tas),' +
     'usdPlan,SUMPRODUCT(usd*pp),usdReal,SUMPRODUCT(usd*re),' +
     'porCambiar,MAX(0,usdReal-cambiados),realUsd,pesos+porCambiar*tasa,' +
@@ -78,8 +78,12 @@ function formulaFormaPago() {
   return `=ARRAYFORMULA(IFERROR(LET(${letGastos('PanelIndice')}${LET_PERSONAS}fp,PanelFormaPago,` +
     'pre,MAP(per,LAMBDA(x,SUMPRODUCT((pe=x)*(pg=fp)*(nm<>"")*(1-padre)*pp))),' +
     'gas,MAP(per,LAMBDA(x,SUMPRODUCT((pe=x)*(pg=fp)*propio*(1-padre)*re))),' +
+    'sinp,(pe="")+(COUNTIF(CfgPersonasNombre,pe)=0),' +
+    'preS,SUMPRODUCT(sinp*(pg=fp)*(nm<>"")*(1-padre)*pp),gasS,SUMPRODUCT(sinp*(pg=fp)*propio*(1-padre)*re),' +
     'vis,(act=TRUE)+(pre<>0)+(gas<>0),' +
-    '{FILTER({per,pre,gas,pre-gas},vis>0);{"Total",SUM(pre),SUM(gas),SUM(pre)-SUM(gas)}}),""))';
+    'filas,FILTER({{per,pre,gas,pre-gas};{"Sin persona",preS,gasS,preS-gasS}},{vis>0;(preS<>0)+(gasS<>0)>0}),' +
+    'totP,SUM(pre)+preS,totG,SUM(gas)+gasS,' +
+    '{filas;{"Total",totP,totG,totP-totG}}),""))';
 }
 
 function formulaFormaPagoNota() {
@@ -135,11 +139,11 @@ function disenoPanel(datos) {
     { a1: 'A5', nombre: 'PanelIngresosEtiqueta', formula: `=IF(${calc(3)},"Ingresos","Ingresos (planeados)")` },
     { a1: 'A6', nombre: 'PanelIngresos', formula: `=IF(${calc(3)},${calc(2)},${calc(1)})` },
     { a1: 'C5', valor: 'Gastado hasta hoy' },
-    { a1: 'C6', nombre: 'PanelGastado', formula: `=SUM(D${f}:D${ULTIMA_FILA_TABLA})` },
+    { a1: 'C6', nombre: 'PanelGastado', formula: `=SUM(D${f}:D)` },
     { a1: 'E5', valor: 'Queda del presupuesto' },
     { a1: 'E6', nombre: 'PanelQueda', formula: '=PanelPresupuestado-PanelGastado' },
     { a1: 'A7', valor: 'Presupuestado' },
-    { a1: 'B7', nombre: 'PanelPresupuestado', formula: `=SUM(C${f}:C${ULTIMA_FILA_TABLA})` },
+    { a1: 'B7', nombre: 'PanelPresupuestado', formula: `=SUM(C${f}:C)` },
     { a1: 'C7', nombre: 'PanelSinAsignarEtiqueta', formula: '=IF(PanelSinAsignar<0,"Sobre-asignado","Sin asignar")' },
     { a1: 'E7', nombre: 'PanelSinAsignar', formula: `=${calc(1)}-PanelPresupuestado` },
 

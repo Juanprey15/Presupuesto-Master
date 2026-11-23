@@ -30,7 +30,7 @@ const CONFIG = {
   ZONA_HORARIA: 'America/Bogota',
   /** Configuración inicial de una planilla nueva sin datos de ejemplo. */
   DEFECTOS: {
-    general: { nombre: 'Mi familia', ano: new Date().getFullYear(), mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true },
+    general: { nombre: 'Mi familia', ano: new Date().getFullYear(), mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true, tolerancia: 0.1 },
     personas: [{ nombre: 'Persona 1', activa: true }, { nombre: 'Persona 2', activa: true }],
     formasPago: [{ nombre: 'Efectivo', activa: true }, { nombre: 'Digital', activa: true }],
     tipos: [

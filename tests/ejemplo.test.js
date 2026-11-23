@@ -9,7 +9,7 @@ const plano = (x) => JSON.parse(JSON.stringify(x));
 
 test('configuración del ejemplo', () => {
   const c = plano(EJEMPLO.config);
-  assert.deepEqual(c.general, { nombre: 'Familia Prueba', ano: 2026, mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true });
+  assert.deepEqual(c.general, { nombre: 'Familia Prueba', ano: 2026, mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true, tolerancia: 0.1 });
   assert.deepEqual(c.personas.map((p) => [p.nombre, p.activa]), [['Ana', true], ['Luis', true], ['Sol', false]]);
   assert.deepEqual(c.formasPago.map((p) => [p.nombre, p.activa]), [['Efectivo', true], ['Digital', true], ['Tarjeta Azul', false]]);
   assert.deepEqual(c.grupos.map((g) => [g.nombre, g.orden, g.activo]), [['Casa', 1, true], ['Sol', 2, true], ['Diversión', 3, true], ['Ahorro', 4, true]]);

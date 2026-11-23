@@ -17,7 +17,7 @@ test('fila de la tasa para planear: escrita o copiada del mes anterior', () => {
   assert.equal(celdaDe(d, 'D3').valor, 4000);
   assert.equal(celdaDe(d, 'F3').formula, '=IF(D3="","",D3)');
   assert.equal(celdaDe(d, 'H3').valor, 3900);
-  assert.match(celdaDe(d, 'E3').formula, /^=IFERROR\(SUMIF\(\$AC\$3:\$AC,DATE\(CfgAno,CfgMesInicio\+0,1\),\$AG\$3:\$AG\)/);
+  assert.match(celdaDe(d, 'E3').formula, /^=IFERROR\(SUMIFS\(\$AG\$3:\$AG,\$AC\$3:\$AC,">="&DATE\(CfgAno,CfgMesInicio\+0,1\)/);
 });
 
 test('fuentes: valores escritos y copia del presupuesto', () => {
@@ -44,4 +44,10 @@ test('validaciones de Ingresos', () => {
   const v = disenoIngresos().validaciones;
   assert.equal(v.find((x) => x.columna === 2).lista, 'ListaPersonas');
   assert.equal(v.find((x) => x.columna === 3).lista, 'ListaMonedas');
+});
+
+test('la tasa real de Ingresos cuenta cambios de cualquier día del mes', () => {
+  const f = disenoIngresos(EJEMPLO).celdas.find((c) => c.fila === 3 && c.columna === 5).formula;
+  assert.match(f, /SUMIFS\(/);
+  assert.match(f, /">="&DATE\(CfgAno,CfgMesInicio\+0,1\)/);
 });

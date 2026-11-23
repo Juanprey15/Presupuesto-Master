@@ -91,3 +91,16 @@ test('el año tiene 12 meses y copia el presupuesto hacia adelante', () => {
   assert.deepEqual(a[0], { presupuestado: 4050000, real: 4000000 });
   assert.deepEqual(a[11], { presupuestado: 4200000, real: 0 });
 });
+
+test('el efectivo de un gasto sin persona va en "Sin persona" y suma en el total', () => {
+  const d = { ...EJEMPLO, gastos: [...EJEMPLO.gastos,
+    { gasto: 'Mesada', grupo: 'Casa', parteDe: '', tipo: 'N', comportamiento: 'fijo', persona: '', pago: 'Efectivo', meses: [[70000, 20000]] }] };
+  const e = plano(calcularFormaPago(d, 0, 'Efectivo'));
+  assert.deepEqual(e.filas[e.filas.length - 1], { persona: 'Sin persona', presupuestado: 70000, gastado: 20000, falta: 50000 });
+  assert.deepEqual(e.total, { presupuestado: 720000, gastado: 320000, falta: 400000 });
+});
+
+test('la tolerancia de "va rápido" sale de la Configuración', () => {
+  const d = conGeneral(EJEMPLO, { tolerancia: 0.5 });
+  assert.equal(fila(calcularMes(d, 2, HOY), 'Salidas').estado, 'En ritmo');
+});
