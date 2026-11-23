@@ -43,8 +43,20 @@ npx clasp push      # sube src/ al proyecto de Apps Script
 npx clasp open-script
 ```
 
-En el editor de Apps Script se ejecuta `generarPlantilla`: crea una planilla nueva en el Drive y
-registra su URL. La planilla generada no contiene código.
+En el editor de Apps Script se ejecuta `generarPlantilla` (planilla vacía), `generarConEjemplo` (con
+datos ficticios) o `verificarPanel` (genera con ejemplo y compara el Panel contra el cálculo de
+`src/oraculo.js`). Cada una crea una planilla nueva en el Drive y registra su URL. La planilla generada
+no contiene código.
+
+La planilla tiene una hoja por año con los meses en columnas:
+
+| Pestaña | Qué tiene |
+|---|---|
+| Inicio | Nombre, versión y cómo se usa |
+| Panel | Resumen del mes elegido: presupuestado contra real, efectivo por persona, ingresos y tasa, año |
+| Gastos | Una fila por gasto (o parte de un gasto) y Presup. / Real por mes; el presupuesto se copia solo |
+| Ingresos | Fuentes de ingreso por mes, tasa para planear y tabla de cambios de moneda |
+| Configuración | Nombre, año, monedas, personas, formas de pago, tipos con metas y grupos |
 
 ## Estructura
 

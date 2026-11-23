@@ -14,9 +14,10 @@ function generarPlantilla(opciones) {
   ss.deleteSheet(porDefecto);
   construirConfiguracion(ss, datos);
   construirListas(ss);
-  construirDatos(ss, datos);
-  construirListas(ss, true);
-  construirPanel(ss);
+  construirGastos(ss, datos);
+  construirIngresos(ss, datos);
+  construirPanel(ss, datos);
+  construirInicio(ss);
   ss.getSheetByName(CONFIG.HOJAS.listas).hideSheet();
   ss.setSpreadsheetLocale(CONFIG.LOCALE);
   return ss.getUrl();
