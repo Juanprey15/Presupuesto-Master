@@ -17,6 +17,22 @@ test('los nombres de pestañas son únicos y _Listas es oculta por nombre', () =
   assert.ok(CONFIG.HOJAS.listas.startsWith('_'));
 });
 
+test('pestañas de la hoja anual', () => {
+  assert.deepEqual({ ...CONFIG.HOJAS }, {
+    inicio: 'Inicio', panel: 'Panel', gastos: 'Gastos', ingresos: 'Ingresos', configuracion: 'Configuración', listas: '_Listas',
+  });
+});
+
+test('dimensiones de las grillas y defectos', () => {
+  assert.deepEqual([CONFIG.MESES, CONFIG.FILA_DATOS, CONFIG.FILAS_GASTOS, CONFIG.FILAS_INGRESOS, CONFIG.TOLERANCIA_RITMO],
+    [12, 3, 200, 20, 0.1]);
+  assert.equal(CONFIG.DEFECTOS.general.copiar, true);
+  assert.equal(CONFIG.DEFECTOS.general.mesInicio, 1);
+  assert.deepEqual(Object.values(CONFIG.COLUMNAS.gastos), ['Gasto', 'Grupo', 'Parte de', 'Tipo', 'Comportamiento', 'Persona', 'Pago']);
+  assert.deepEqual(Object.values(CONFIG.COLUMNAS.ingresos), ['Fuente', 'Persona', 'Moneda']);
+  assert.deepEqual(Object.values(CONFIG.COLUMNAS.cambios), ['Mes del ingreso', 'Fecha', 'Dólares', 'Tasa', 'En pesos']);
+});
+
 test('la paleta es Juan Basic más el color de alerta del boceto', () => {
   assert.deepEqual({ ...CONFIG.PALETA }, {
     ground: '#E8E8E3', surface: '#FFFFFF', ink: '#23262A', muted: '#565C61',

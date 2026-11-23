@@ -5,77 +5,49 @@ const { cargar } = require('./cargar');
 
 const ctx = cargar('config.js', 'ejemplo.js');
 const { CONFIG, EJEMPLO } = vm.runInContext('({ CONFIG, EJEMPLO })', ctx);
-const { config, movimientos, ingresos, presupuestoBase, ajustes, tarjeta, tasas } = EJEMPLO;
-const mesDe = (fecha) => fecha.slice(0, 7);
-const subsValidas = new Set(config.subcategorias.map((s) => `${s.categoria} › ${s.subcategoria}`));
-const categoriaDe = (sub) => sub.split(' › ')[0];
+const plano = (x) => JSON.parse(JSON.stringify(x));
 
-test('las filas usan exactamente las claves de CONFIG.COLUMNAS', () => {
-  const tablas = { movimientos, ingresos, presupuestoBase, ajustes, tarjeta };
-  for (const [nombre, filas] of Object.entries(tablas)) {
-    for (const fila of filas) assert.deepEqual(Object.keys(fila), Object.keys(CONFIG.COLUMNAS[nombre]), nombre);
-  }
+test('configuración del ejemplo', () => {
+  const c = plano(EJEMPLO.config);
+  assert.deepEqual(c.general, { nombre: 'Familia Prueba', ano: 2026, mesInicio: 1, moneda: 'COP', segundaMoneda: 'USD', copiar: true });
+  assert.deepEqual(c.personas.map((p) => [p.nombre, p.activa]), [['Ana', true], ['Luis', true], ['Sol', false]]);
+  assert.deepEqual(c.formasPago.map((p) => [p.nombre, p.activa]), [['Efectivo', true], ['Digital', true], ['Tarjeta Azul', false]]);
+  assert.deepEqual(c.grupos.map((g) => [g.nombre, g.orden, g.activo]), [['Casa', 1, true], ['Sol', 2, true], ['Diversión', 3, true], ['Ahorro', 4, true]]);
+  assert.deepEqual(c.tipos.map((t) => [t.letra, t.nombre, t.meta]),
+    [['E', 'Esenciales', 0.5], ['A', 'Ahorro', 0.2], ['I', 'Inversión', 0.1], ['N', 'No esenciales', 0.2]]);
 });
 
-test('cubre tres meses, de 2026-01 a 2026-03', () => {
-  assert.deepEqual([...new Set(movimientos.map((m) => mesDe(m.fecha)))].sort(), ['2026-01', '2026-02', '2026-03']);
+test('gastos del ejemplo', () => {
+  const GASTOS = [
+    ['Arriendo', 'Casa', '', 'E', 'fijo', 'Ana', 'Digital', [[1500000, 1500000], [null, 1500000], [1600000, null]]],
+    ['Mercado', 'Casa', '', 'E', 'variable', '', '', [[null, 900000], [null, 1100000], [null, 300000]]],
+    ['Carnes', 'Casa', 'Mercado', '', '', 'Ana', 'Digital', [[500000, null]]],
+    ['Frutas', 'Casa', 'Mercado', '', '', 'Luis', 'Efectivo', [[300000, null]]],
+    ['Aseo', 'Casa', 'Mercado', '', '', 'Ana', 'Digital', [[200000, null], [250000, null]]],
+    ['Colegio Sol', 'Sol', '', 'E', 'fijo', 'Luis', 'Digital', [[800000, 800000], [null, 400000]]],
+    ['Salidas', 'Diversión', '', 'N', 'variable', 'Luis', 'Efectivo', [[300000, 250000], [null, null], [null, 200000]]],
+    ['Ahorro', 'Ahorro', '', 'A', 'fijo', 'Ana', 'Digital', [[400000, 400000], [null, 400000]]],
+    ['Gimnasio', 'Inexistente', '', 'N', 'fijo', 'Luis', 'Digital', [['abc', 100000]]],
+    ['Propinas', 'Diversión', 'Restaurantes', 'N', '', 'Luis', 'Efectivo', [[50000, 50000]]],
+  ];
+  const claves = ['gasto', 'grupo', 'parteDe', 'tipo', 'comportamiento', 'persona', 'pago', 'meses'];
+  assert.deepEqual(plano(EJEMPLO.gastos), GASTOS.map((g) => Object.fromEntries(claves.map((k, i) => [k, g[i]]))));
 });
 
-test('hay un ingreso en USD con tasa fija para cada mes', () => {
-  for (const mes of ['2026-01', '2026-02', '2026-03']) {
-    assert.ok(ingresos.some((i) => i.moneda === 'USD' && mesDe(i.fecha) === mes));
-    assert.ok(tasas.some((t) => t.moneda === 'USD' && t.mes === mes && t.tasa > 0));
-  }
+test('ingresos, tasas y cambios del ejemplo', () => {
+  assert.deepEqual(plano(EJEMPLO.ingresos), [
+    { fuente: 'Sueldo Luis', persona: 'Luis', moneda: 'USD', meses: [[2000, 2000], [null, 2000]] },
+    { fuente: 'Ventas Ana', persona: 'Ana', moneda: 'COP', meses: [[3000000, 2700000], [null, 3200000]] },
+  ]);
+  assert.deepEqual(plano(EJEMPLO.tasaPlan), [4000, null, 3900]);
+  assert.deepEqual(plano(EJEMPLO.cambios), [
+    { mes: 0, fecha: '2026-01-30', dolares: 2000, tasa: 4100 },
+    { mes: 1, fecha: '2026-02-20', dolares: 1000, tasa: 4200 },
+    { mes: 1, fecha: '2026-03-02', dolares: 500, tasa: 4300 },
+  ]);
 });
 
-test('hay una categoría desactivada con movimientos solo en enero', () => {
-  const inactivas = config.categorias.filter((c) => !c.activa).map((c) => c.categoria);
-  assert.equal(inactivas.length, 1);
-  const meses = movimientos.filter((m) => categoriaDe(m.subcategoria) === inactivas[0]).map((m) => mesDe(m.fecha));
-  assert.deepEqual([...new Set(meses)], ['2026-01']);
-});
-
-test('hay un cambio de presupuesto base vigente desde 2026-03 y un ajuste en 2026-02', () => {
-  assert.ok(presupuestoBase.some((p) => p.vigenteDesde === '2026-03'));
-  assert.ok(ajustes.some((a) => a.mes === '2026-02'));
-});
-
-test('hay una compra con tarjeta a 3 cuotas en una tarjeta con categoría de pago presupuestada', () => {
-  const compra = tarjeta.find((t) => t.cuotas === 3);
-  assert.ok(compra);
-  const { categoriaPago } = config.tarjetas.find((t) => t.tarjeta === compra.tarjeta);
-  assert.ok(presupuestoBase.some((p) => p.categoria === categoriaPago));
-});
-
-test('hay una subcategoría hormiga con compras sobre y bajo el monto máximo, una con tarjeta', () => {
-  const marcadas = new Set(config.subcategorias.filter((s) => s.hormiga).map((s) => `${s.categoria} › ${s.subcategoria}`));
-  const max = config.hormiga.montoMaximo;
-  const enMarcadas = movimientos.filter((m) => marcadas.has(m.subcategoria) && m.monto != null);
-  assert.ok(enMarcadas.some((m) => m.monto > max));
-  assert.ok(enMarcadas.some((m) => m.monto <= max));
-  assert.ok(tarjeta.some((t) => marcadas.has(t.subcategoria)));
-});
-
-test('hay una no marcada con 3+ compras chicas en los 3 meses y otra que lo cumple solo 2 meses', () => {
-  const { montoMaximo, comprasPorMes } = config.hormiga;
-  const noMarcadas = config.subcategorias.filter((s) => !s.hormiga).map((s) => `${s.categoria} › ${s.subcategoria}`);
-  const mesesQueCumple = (sub) => ['2026-01', '2026-02', '2026-03'].filter((mes) =>
-    movimientos.filter((m) => m.subcategoria === sub && mesDe(m.fecha) === mes && m.monto != null && m.monto <= montoMaximo && m.origen !== 'migrado').length >= comprasPorMes).length;
-  const cuentas = noMarcadas.map(mesesQueCumple);
-  assert.ok(cuentas.includes(3));
-  assert.ok(cuentas.includes(2));
-});
-
-test('hay un movimiento migrado, uno con subcategoría inexistente y uno sin monto', () => {
-  assert.ok(movimientos.some((m) => m.origen === 'migrado'));
-  assert.equal(movimientos.filter((m) => !subsValidas.has(m.subcategoria)).length, 1);
-  assert.ok(movimientos.some((m) => m.monto == null));
-});
-
-test('los nombres de personas, tiendas y tarjetas son los ficticios del ejemplo', () => {
-  assert.deepEqual([...config.personas], ['Ana', 'Luis', 'Sol']);
-  for (const m of movimientos) {
-    assert.ok(config.personas.includes(m.pago), m.pago);
-    if (m.tienda) assert.ok(config.tiendas.includes(m.tienda), m.tienda);
-  }
+test('los gastos y los ingresos usan las claves de CONFIG.COLUMNAS', () => {
+  for (const g of EJEMPLO.gastos) assert.deepEqual(Object.keys(g), [...Object.keys(CONFIG.COLUMNAS.gastos), 'meses']);
+  for (const i of EJEMPLO.ingresos) assert.deepEqual(Object.keys(i), [...Object.keys(CONFIG.COLUMNAS.ingresos), 'meses']);
 });
