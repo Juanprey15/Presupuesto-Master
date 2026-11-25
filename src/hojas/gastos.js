@@ -66,6 +66,38 @@ function disenoGastos(datos) {
   };
 }
 
+/** Código de la forma de pago de cada fila (columna fija), derramado sobre el rango abierto de Gastos. */
+function formulaCodigoPago() {
+  const fp = `$${letraGastos('pago')}$${CONFIG.FILA_DATOS}:$${letraGastos('pago')}`;
+  return `=MAP(${fp},LAMBDA(fp,IF(fp="","",LET(cd,XLOOKUP(fp,CfgFormasPagoNombre,CfgFormasPagoCodigo,""),` +
+    'IF(cd="",LEFT(fp,1),cd)))))';
+}
+
+/** Condición de la regla del tono `nombre`: la forma de pago de la fila tiene ese color en Configuración. */
+function formulaColorPago(nombre) {
+  return `=XLOOKUP($${letraGastos('pago')}${CONFIG.FILA_DATOS},INDIRECT("CfgFormasPagoNombre"),` +
+    `INDIRECT("CfgFormasPagoColor"),"")="${nombre}"`;
+}
+
+/**
+ * Reglas de formato de Gastos en orden de prioridad: gris del Real de las partes, negrita del gasto padre y
+ * un tono por color de la paleta de pago (columna del código y meses). Rangos en A1.
+ */
+function reglasGastos() {
+  const f0 = CONFIG.FILA_DATOS;
+  const u = f0 + CONFIG.FILAS_GASTOS - 1;
+  const pd = letraGastos('parteDe');
+  const ultima = letra(PRIMERA_COLUMNA_GASTOS + 2 * CONFIG.MESES - 1);
+  const columna = (n) => `${letra(n)}${f0}:${letra(n)}${u}`;
+  const reales = Array.from({ length: CONFIG.MESES }, (_, i) => columna(columnaMes(PRIMERA_COLUMNA_GASTOS, i, 'real')));
+  const tenidos = [columna(columnaGastos('codigo')), `${letra(PRIMERA_COLUMNA_GASTOS)}${f0}:${ultima}${u}`];
+  return [
+    { formula: `=$${pd}${f0}<>""`, fondo: CONFIG.PALETA.line, rangos: reales },
+    { formula: `=COUNTIF($${pd}$${f0}:$${pd},$A${f0})>0`, negrita: true, rangos: [`A${f0}:${ultima}${u}`] },
+    ...CONFIG.PALETA_PAGO.map(([nombre, hex]) => ({ formula: formulaColorPago(nombre), fondo: hex, rangos: tenidos })),
+  ];
+}
+
 /** Escribe Gastos. Requiere Configuración y _Listas. */
 function construirGastos(ss, datos) {
   const sh = ss.getSheetByName(CONFIG.HOJAS.gastos);
@@ -73,17 +105,16 @@ function construirGastos(ss, datos) {
   const f0 = CONFIG.FILA_DATOS;
   const filas = CONFIG.FILAS_GASTOS;
   const primera = PRIMERA_COLUMNA_GASTOS;
-  const pd = letraGastos('parteDe');
   escribirGrilla(ss, sh, disenoGastos(datos), primera, 2);
+  sh.getRange(f0, columnaGastos('codigo')).setFormula(formulaCodigoPago());
 
-  const reales = Array.from({ length: CONFIG.MESES }, (_, i) => sh.getRange(f0, columnaMes(primera, i, 'real'), filas, 1));
-  const todo = sh.getRange(f0, 1, filas, primera + 2 * CONFIG.MESES - 1);
-  sh.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(`=$${pd}${f0}<>""`)
-      .setBackground(P.line).setRanges(reales).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(`=COUNTIF($${pd}$${f0}:$${pd},$A${f0})>0`)
-      .setBold(true).setRanges([todo]).build(),
-  ]);
+  sh.setConditionalFormatRules(reglasGastos().map((r) => {
+    const regla = SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(r.formula)
+      .setRanges(r.rangos.map((a1) => sh.getRange(a1)));
+    if (r.fondo) regla.setBackground(r.fondo);
+    if (r.negrita) regla.setBold(true);
+    return regla.build();
+  }));
   sh.getRange(f0, columnaGastos('parteDe'), filas, 1).setFontColor(P.muted);
   sh.setColumnWidth(columnaGastos('codigo'), 34);
   sh.getRange(f0, columnaGastos('codigo'), filas, 1).setHorizontalAlignment('center').setFontWeight('bold');

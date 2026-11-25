@@ -69,3 +69,30 @@ test('las letras de Gastos salen del orden de sus columnas', () => {
   assert.deepEqual(['gasto', 'codigo', 'grupo', 'parteDe', 'pago'].map(letraGastos), ['A', 'B', 'C', 'D', 'H']);
   assert.equal(PRIMERA_COLUMNA_GASTOS, 9);
 });
+
+const ctx3 = cargar('config.js', 'hojas/grilla.js', 'hojas/gastos.js');
+const { formulaCodigoPago, formulaColorPago, reglasGastos } = vm.runInContext('({ formulaCodigoPago, formulaColorPago, reglasGastos })', ctx3);
+
+test('código de la forma de pago: una fórmula derramada sobre el rango abierto, primera letra si falta el código', () => {
+  assert.equal(formulaCodigoPago(),
+    '=MAP($H$3:$H,LAMBDA(fp,IF(fp="","",LET(cd,XLOOKUP(fp,CfgFormasPagoNombre,CfgFormasPagoCodigo,""),IF(cd="",LEFT(fp,1),cd)))))');
+});
+
+test('color de la forma de pago: busca en Configuración por rango con nombre', () => {
+  assert.equal(formulaColorPago('Musgo'),
+    '=XLOOKUP($H3,INDIRECT("CfgFormasPagoNombre"),INDIRECT("CfgFormasPagoColor"),"")="Musgo"');
+});
+
+test('reglas de Gastos: gris de las partes y negrita del padre primero, luego un tono por color', () => {
+  const r = plano(reglasGastos());
+  assert.equal(r.length, 2 + CONFIG.PALETA_PAGO.length);
+  assert.equal(r[0].formula, '=$D3<>""');
+  assert.equal(r[0].fondo, CONFIG.PALETA.line);
+  assert.deepEqual(r[0].rangos.slice(0, 2), ['J3:J202', 'L3:L202']);
+  assert.equal(r[0].rangos.length, CONFIG.MESES);
+  assert.equal(r[1].formula, '=COUNTIF($D$3:$D,$A3)>0');
+  assert.deepEqual(r[1].rangos, ['A3:AF202']);
+  CONFIG.PALETA_PAGO.forEach(([nombre, hex], k) => {
+    assert.deepEqual(r[2 + k], { formula: formulaColorPago(nombre), fondo: hex, rangos: ['B3:B202', 'I3:AF202'] });
+  });
+});
