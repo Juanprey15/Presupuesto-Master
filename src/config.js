@@ -46,4 +46,10 @@ const CONFIG = {
     // Alerta (excedido, va rápido); siempre acompañada de texto.
     warn: '#8A4B12',
   },
+  // Tonos suaves para teñir los meses según la forma de pago; el texto (ink) pasa AA sobre todos.
+  PALETA_PAGO: [
+    ['Musgo', '#E1E8CF'], ['Pizarra', '#D9E2EA'], ['Arena', '#EFE5D3'], ['Malva', '#E8DDE6'],
+    ['Cielo', '#D8EAF0'], ['Durazno', '#F4DFD2'], ['Salvia', '#DCE8DF'], ['Gris', '#E4E4E0'],
+  ],
+  SIN_COLOR: 'Sin color',
 };

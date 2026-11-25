@@ -21,6 +21,7 @@ test('Configuración define los rangos con nombre del contrato, sin repetir', ()
   assert.equal(new Set(n).size, n.length);
   for (const x of ['CfgNombre', 'CfgAno', 'CfgMesInicio', 'CfgMoneda', 'CfgSegundaMoneda', 'CfgCopiar',
     'CfgPersonasNombre', 'CfgPersonasActiva', 'CfgFormasPagoNombre', 'CfgFormasPagoActiva',
+    'CfgFormasPagoCodigo', 'CfgFormasPagoColor',
     'CfgTiposLetra', 'CfgTiposNombre', 'CfgTiposMeta', 'CfgGruposNombre', 'CfgGruposOrden', 'CfgGruposActivo']) {
     assert.ok(n.includes(x), x);
   }
@@ -74,4 +75,20 @@ test('la segunda moneda se activa con una casilla, apagada por defecto', () => {
   assert.equal(valor(), false);
   assert.equal(valor(EJEMPLO), true);
   assert.match(formulasListas().find((l) => l.nombre === 'ListaMonedas').formula, /CfgUsarSegunda/);
+});
+
+test('con datos sin código ni color, Formas de pago recibe los defectos', () => {
+  const t = disenoConfiguracion(EJEMPLO).find((x) => x.clave === 'FormasPago');
+  assert.deepEqual([...t.encabezados], ['Forma de pago', 'Activa', 'Código', 'Color']);
+  assert.deepEqual(JSON.parse(JSON.stringify(t.filas)),
+    [['Efectivo', true, 'E', 'Musgo'], ['Digital', true, 'D', 'Pizarra'], ['Tarjeta Azul', false, 'T', 'Arena']]);
+});
+
+test('Formas de pago conserva código y color propios; de la novena en adelante, sin color', () => {
+  const formasPago = Array.from({ length: 9 }, (_, k) => ({ nombre: `F${k}`, activa: true }));
+  formasPago[0] = { nombre: 'Tarjeta de crédito', activa: true, codigo: 'TC', color: 'Cielo' };
+  const datos = { config: { ...EJEMPLO.config, formasPago } };
+  const filas = disenoConfiguracion(datos).find((x) => x.clave === 'FormasPago').filas;
+  assert.deepEqual([...filas[0]], ['Tarjeta de crédito', true, 'TC', 'Cielo']);
+  assert.deepEqual([...filas[8]], ['F8', true, 'F', 'Sin color']);
 });

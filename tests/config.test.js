@@ -39,3 +39,10 @@ test('la paleta es Juan Basic más el color de alerta del boceto', () => {
     primary: '#3F5566', accent: '#6F7F3A', deep: '#222C33', line: '#D2D3CC', warn: '#8A4B12',
   });
 });
+
+test('la paleta de formas de pago tiene 8 tonos con nombres distintos', () => {
+  const nombres = CONFIG.PALETA_PAGO.map(([nombre]) => nombre);
+  assert.deepEqual([...nombres], ['Musgo', 'Pizarra', 'Arena', 'Malva', 'Cielo', 'Durazno', 'Salvia', 'Gris']);
+  assert.ok(CONFIG.PALETA_PAGO.every(([, hex]) => /^#[0-9A-F]{6}$/.test(hex)));
+  assert.equal(CONFIG.SIN_COLOR, 'Sin color');
+});

@@ -17,7 +17,15 @@ const FILAS_GENERAL = [
 function tablasConfiguracion() {
   return [
     { clave: 'Personas', titulo: 'Personas', columnas: { nombre: 'Persona', activa: 'Activa' }, filasDe: (c) => c.personas },
-    { clave: 'FormasPago', titulo: 'Formas de pago', columnas: { nombre: 'Forma de pago', activa: 'Activa' }, filasDe: (c) => c.formasPago },
+    {
+      clave: 'FormasPago', titulo: 'Formas de pago',
+      columnas: { nombre: 'Forma de pago', activa: 'Activa', codigo: 'Código', color: 'Color' },
+      filasDe: (c) => c.formasPago.map((f, k) => ({
+        codigo: f.nombre.charAt(0),
+        color: k < CONFIG.PALETA_PAGO.length ? CONFIG.PALETA_PAGO[k][0] : CONFIG.SIN_COLOR,
+        ...f,
+      })),
+    },
     { clave: 'Tipos', titulo: 'Tipos de gasto y metas', columnas: { letra: 'Letra', nombre: 'Nombre', meta: 'Meta' }, filasDe: (c) => c.tipos },
     { clave: 'Grupos', titulo: 'Grupos', columnas: { nombre: 'Grupo', orden: 'Orden', activo: 'Activo' }, filasDe: (c) => c.grupos },
   ];
@@ -84,4 +92,8 @@ function formatearColumnaConfig(rango, clave) {
   if (['activa', 'activo'].includes(clave)) rango.insertCheckboxes();
   else if (clave === 'meta') rango.setNumberFormat('0%');
   else if (clave === 'orden') rango.setNumberFormat('0');
+  else if (clave === 'color') {
+    rango.setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInList([...CONFIG.PALETA_PAGO.map(([nombre]) => nombre), CONFIG.SIN_COLOR]).build());
+  }
 }
