@@ -33,7 +33,8 @@ function matrizMeses(celdas, primera, filaInicial, filas) {
 
 /**
  * Escribe encabezados, columnas fijas, meses, validaciones y formato común de una grilla.
- * `diseno` = { encabezados, filas, celdas, validaciones }.
+ * `diseno` = { encabezados, separador, filas, celdas, validaciones }; `separador` es el color de la línea gruesa
+ * a la izquierda de cada mes, en toda la altura de la hoja.
  */
 function escribirGrilla(ss, sh, diseno, primera, columnasFijas = 1) {
   const P = CONFIG.PALETA;
@@ -48,6 +49,8 @@ function escribirGrilla(ss, sh, diseno, primera, columnasFijas = 1) {
     const c = columnaMes(primera, i, 'presupuesto');
     sh.getRange(1, c, 1, 2).merge().setFormula(formulaEncabezadoMes(i)).setNumberFormat('mmmm yyyy').setHorizontalAlignment('center');
     sh.getRange(2, c, 1, 2).setValues([['Presup.', 'Real']]);
+    sh.getRange(1, c, sh.getMaxRows(), 1)
+      .setBorder(null, true, null, null, null, null, diseno.separador, SpreadsheetApp.BorderStyle.SOLID_THICK);
   }
   sh.getRange(1, 1, 1, ultimaCol).setBackground(P.primary).setFontColor(P.surface).setFontWeight('bold');
   sh.getRange(2, 1, 1, ultimaCol).setBackground(P.deep).setFontColor(P.ground).setFontWeight('bold');
