@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { cargar } = require('./cargar');
 
-const ctx = cargar('config.js', 'ejemplo.js', 'hojas/configuracion.js', 'hojas/listas.js');
+const ctx = cargar('config.js', 'ejemplo.js', 'hojas/grilla.js', 'hojas/gastos.js', 'hojas/configuracion.js', 'hojas/listas.js');
 const { EJEMPLO, disenoConfiguracion, formulasListas } = vm.runInContext('({ EJEMPLO, disenoConfiguracion, formulasListas })', ctx);
 const nombres = () => disenoConfiguracion().flatMap((t) => t.rangos.map((r) => r.nombre));
 const ACOTADO = /(?:Gastos|Ingresos)!\$?[A-Z]+\$?\d+:\$?[A-Z]+\$?\d+/;
@@ -91,4 +91,9 @@ test('Formas de pago conserva código y color propios; de la novena en adelante,
   const filas = disenoConfiguracion(datos).find((x) => x.clave === 'FormasPago').filas;
   assert.deepEqual([...filas[0]], ['Tarjeta de crédito', true, 'TC', 'Cielo']);
   assert.deepEqual([...filas[8]], ['F8', true, 'F', 'Sin color']);
+});
+
+test('ListaGastosPadre filtra por la columna "Parte de" de Gastos', () => {
+  const l = formulasListas().find((x) => x.nombre === 'ListaGastosPadre');
+  assert.equal(l.formula, '=IFERROR(UNIQUE(FILTER(Gastos!$A$3:$A,Gastos!$D$3:$D="",Gastos!$A$3:$A<>"")))');
 });

@@ -13,8 +13,11 @@ const MESES_CONSTANTE = `{${Array.from({ length: CONFIG.MESES }, (_, k) => k).jo
  * marcas de cada fila (parte de un gasto existente, gasto con partes, gasto propio).
  */
 function letGastos(indice) {
-  return `i,${indice},nm,Gastos!$A$3:$A,gr,Gastos!$B$3:$B,pd,Gastos!$C$3:$C,tp,Gastos!$D$3:$D,cm,Gastos!$E$3:$E,` +
-    'pe,Gastos!$F$3:$F,pg,Gastos!$G$3:$G,pr,INDEX(Gastos!$H$3:$AE,0,2*i+1),rr,INDEX(Gastos!$H$3:$AE,0,2*i+2),' +
+  const col = (clave) => `Gastos!$${letraGastos(clave)}$3:$${letraGastos(clave)}`;
+  const meses = `Gastos!$${letra(PRIMERA_COLUMNA_GASTOS)}$3:$${letra(PRIMERA_COLUMNA_GASTOS + 2 * CONFIG.MESES - 1)}`;
+  return `i,${indice},nm,${col('gasto')},gr,${col('grupo')},pd,${col('parteDe')},tp,${col('tipo')},` +
+    `cm,${col('comportamiento')},pe,${col('persona')},pg,${col('pago')},` +
+    `pr,INDEX(${meses},0,2*i+1),rr,INDEX(${meses},0,2*i+2),` +
     'pp,IF(ISNUMBER(pr),pr,0),re,IF(ISNUMBER(rr),rr,0),hay,ISNUMBER(rr),tops,IF(pd="",nm,""),' +
     'parte,(pd<>"")*ISNUMBER(MATCH(pd,tops,0)),padre,(nm<>"")*(pd="")*ISNUMBER(MATCH(nm,pd,0)),' +
     'propio,(nm<>"")*(1-parte),';

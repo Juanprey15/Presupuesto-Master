@@ -35,7 +35,7 @@ function matrizMeses(celdas, primera, filaInicial, filas) {
  * Escribe encabezados, columnas fijas, meses, validaciones y formato común de una grilla.
  * `diseno` = { encabezados, filas, celdas, validaciones }.
  */
-function escribirGrilla(ss, sh, diseno, primera) {
+function escribirGrilla(ss, sh, diseno, primera, columnasFijas = 1) {
   const P = CONFIG.PALETA;
   const f0 = CONFIG.FILA_DATOS;
   const filas = diseno.filas.length;
@@ -67,7 +67,7 @@ function escribirGrilla(ss, sh, diseno, primera) {
 
   sh.getRange(1, 1, f0 + filas, ultimaCol).setFontFamily('Bricolage Grotesque').setFontSize(10);
   sh.setFrozenRows(2);
-  sh.setFrozenColumns(1);
+  sh.setFrozenColumns(columnasFijas);
   sh.setColumnWidth(1, 170);
   sh.getRange(1, 1, 2, ultimaCol).protect().setDescription('Encabezados de la grilla').setWarningOnly(true);
 }

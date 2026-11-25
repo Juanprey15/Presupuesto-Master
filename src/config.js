@@ -19,8 +19,8 @@ const CONFIG = {
   /** Columnas fijas de cada grilla: clave interna -> encabezado visible, en orden de columna. */
   COLUMNAS: {
     gastos: {
-      gasto: 'Gasto', grupo: 'Grupo', parteDe: 'Parte de', tipo: 'Tipo', comportamiento: 'Comportamiento',
-      persona: 'Persona', pago: 'Pago',
+      gasto: 'Gasto', codigo: 'Pago', grupo: 'Grupo', parteDe: 'Parte de', tipo: 'Tipo',
+      comportamiento: 'Comportamiento', persona: 'Persona', pago: 'Forma de pago',
     },
     ingresos: { fuente: 'Fuente', persona: 'Persona', moneda: 'Moneda' },
     cambios: { mes: 'Mes del ingreso', fecha: 'Fecha', dolares: 'Dólares', tasa: 'Tasa', pesos: 'En pesos' },

@@ -28,7 +28,7 @@ test('dimensiones de las grillas y defectos', () => {
     [12, 3, 200, 20, 0.1]);
   assert.equal(CONFIG.DEFECTOS.general.copiar, true);
   assert.equal(CONFIG.DEFECTOS.general.mesInicio, 1);
-  assert.deepEqual(Object.values(CONFIG.COLUMNAS.gastos), ['Gasto', 'Grupo', 'Parte de', 'Tipo', 'Comportamiento', 'Persona', 'Pago']);
+  assert.deepEqual(Object.values(CONFIG.COLUMNAS.gastos), ['Gasto', 'Pago', 'Grupo', 'Parte de', 'Tipo', 'Comportamiento', 'Persona', 'Forma de pago']);
   assert.deepEqual(Object.values(CONFIG.COLUMNAS.ingresos), ['Fuente', 'Persona', 'Moneda']);
   assert.deepEqual(Object.values(CONFIG.COLUMNAS.cambios), ['Mes del ingreso', 'Fecha', 'Dólares', 'Tasa', 'En pesos']);
 });

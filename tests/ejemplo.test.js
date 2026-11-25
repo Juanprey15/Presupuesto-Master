@@ -47,7 +47,7 @@ test('ingresos, tasas y cambios del ejemplo', () => {
   ]);
 });
 
-test('los gastos y los ingresos usan las claves de CONFIG.COLUMNAS', () => {
-  for (const g of EJEMPLO.gastos) assert.deepEqual(Object.keys(g), [...Object.keys(CONFIG.COLUMNAS.gastos), 'meses']);
+test('los gastos (salvo el código calculado) y los ingresos usan las claves de CONFIG.COLUMNAS', () => {
+  for (const g of EJEMPLO.gastos) assert.deepEqual(Object.keys(g), [...Object.keys(CONFIG.COLUMNAS.gastos).filter((k) => k !== 'codigo'), 'meses']);
   for (const i of EJEMPLO.ingresos) assert.deepEqual(Object.keys(i), [...Object.keys(CONFIG.COLUMNAS.ingresos), 'meses']);
 });
