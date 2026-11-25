@@ -77,3 +77,20 @@ test('Inicio muestra el nombre, la versión y cómo se usa', () => {
     assert.ok(textos.some((t) => t.valor === frase), frase);
   }
 });
+
+test('generarPlantilla usa los datos que recibe', () => {
+  const ctx = cargar(...ARCHIVOS);
+  const { SpreadsheetApp } = falsoSpreadsheetApp();
+  ctx.SpreadsheetApp = SpreadsheetApp;
+  ctx.Charts = { ChartType: { COLUMN: 'COLUMN' }, ChartHiddenDimensionStrategy: { SHOW_BOTH: 'SHOW_BOTH' } };
+  let recibido = null;
+  ctx.construirConfiguracion = (ss, datos) => { recibido = datos; };
+  const datos = vm.runInContext('EJEMPLO', ctx);
+  ctx.generarPlantilla({ datos });
+  assert.strictEqual(recibido, datos);
+});
+
+test('generarFamilia sin src/familia.js avisa qué falta', () => {
+  const ctx = cargar(...ARCHIVOS);
+  assert.throws(() => ctx.generarFamilia(), /Falta src\/familia\.js/);
+});

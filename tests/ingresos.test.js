@@ -57,3 +57,8 @@ test('la fila de tasa y la tabla de cambios solo se ven con segunda moneda', () 
   assert.equal(d.filas[0][0], '=IF(CfgUsarSegunda,"Tasa para planear","")');
   assert.equal(d.cambios.formulasEncabezado[0], '=IF(CfgUsarSegunda,"Mes del ingreso","")');
 });
+
+test('un cambio sin fecha deja la celda de fecha vacía', () => {
+  const d = disenoIngresos({ ...EJEMPLO, cambios: [{ mes: 0, fecha: '', dolares: 100, tasa: 4000 }] });
+  assert.equal(d.cambios.filas[0][1], '');
+});

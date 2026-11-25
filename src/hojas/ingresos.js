@@ -56,8 +56,8 @@ function disenoIngresos(datos) {
       encabezados: Object.values(CONFIG.COLUMNAS.cambios),
       formulasEncabezado: Object.values(CONFIG.COLUMNAS.cambios).map((t) => `=IF(CfgUsarSegunda,"${t}","")`),
       filas: (datos ? datos.cambios : []).map((c) => {
-        const [y, mm, dd] = c.fecha.split('-').map(Number);
-        return [new Date(ano, mesInicio - 1 + c.mes, 1), new Date(y, mm - 1, dd), c.dolares, c.tasa];
+        const [y, mm, dd] = (c.fecha || '').split('-').map(Number);
+        return [new Date(ano, mesInicio - 1 + c.mes, 1), c.fecha ? new Date(y, mm - 1, dd) : '', c.dolares, c.tasa];
       }),
       formulaPesos: (fila) => {
         const [dl, ts] = [letra(COLUMNA_CAMBIOS + 2), letra(COLUMNA_CAMBIOS + 3)];

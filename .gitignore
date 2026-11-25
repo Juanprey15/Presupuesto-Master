@@ -30,3 +30,6 @@ scratch/
 # Node y clasp
 node_modules/
 .clasprc.json
+
+# Datos reales de la familia durante la migración
+src/familia.js
