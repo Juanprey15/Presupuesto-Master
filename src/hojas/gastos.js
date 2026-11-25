@@ -66,11 +66,14 @@ function disenoGastos(datos) {
   };
 }
 
-/** Código de la forma de pago de cada fila (columna fija), derramado sobre el rango abierto de Gastos. */
+/**
+ * Encabezado y código de la forma de pago de cada fila: va en la fila de encabezados (protegida) y derrama
+ * sobre el rango abierto de Gastos, así borrar u ordenar filas de datos no lo quita.
+ */
 function formulaCodigoPago() {
   const fp = `$${letraGastos('pago')}$${CONFIG.FILA_DATOS}:$${letraGastos('pago')}`;
-  return `=MAP(${fp},LAMBDA(fp,IF(fp="","",LET(cd,XLOOKUP(fp,CfgFormasPagoNombre,CfgFormasPagoCodigo,""),` +
-    'IF(cd="",LEFT(fp,1),cd)))))';
+  return `={"${CONFIG.COLUMNAS.gastos.codigo}";MAP(${fp},LAMBDA(fp,IF(fp="","",` +
+    'LET(cd,XLOOKUP(fp,CfgFormasPagoNombre,CfgFormasPagoCodigo,""),IF(cd="",LEFT(fp,1),cd)))))}';
 }
 
 /** Condición de la regla del tono `nombre`: la forma de pago de la fila tiene ese color en Configuración. */
@@ -106,7 +109,7 @@ function construirGastos(ss, datos) {
   const filas = CONFIG.FILAS_GASTOS;
   const primera = PRIMERA_COLUMNA_GASTOS;
   escribirGrilla(ss, sh, disenoGastos(datos), primera, 2);
-  sh.getRange(f0, columnaGastos('codigo')).setFormula(formulaCodigoPago());
+  sh.getRange(f0 - 1, columnaGastos('codigo')).setFormula(formulaCodigoPago());
 
   sh.setConditionalFormatRules(reglasGastos().map((r) => {
     const regla = SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(r.formula)

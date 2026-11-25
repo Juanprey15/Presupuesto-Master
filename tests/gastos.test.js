@@ -73,9 +73,9 @@ test('las letras de Gastos salen del orden de sus columnas', () => {
 const ctx3 = cargar('config.js', 'hojas/grilla.js', 'hojas/gastos.js');
 const { formulaCodigoPago, formulaColorPago, reglasGastos } = vm.runInContext('({ formulaCodigoPago, formulaColorPago, reglasGastos })', ctx3);
 
-test('código de la forma de pago: una fórmula derramada sobre el rango abierto, primera letra si falta el código', () => {
+test('código de la forma de pago: anclado en el encabezado y derramado sobre el rango abierto, primera letra si falta el código', () => {
   assert.equal(formulaCodigoPago(),
-    '=MAP($H$3:$H,LAMBDA(fp,IF(fp="","",LET(cd,XLOOKUP(fp,CfgFormasPagoNombre,CfgFormasPagoCodigo,""),IF(cd="",LEFT(fp,1),cd)))))');
+    '={"Pago";MAP($H$3:$H,LAMBDA(fp,IF(fp="","",LET(cd,XLOOKUP(fp,CfgFormasPagoNombre,CfgFormasPagoCodigo,""),IF(cd="",LEFT(fp,1),cd)))))}');
 });
 
 test('color de la forma de pago: busca en Configuración por rango con nombre', () => {
