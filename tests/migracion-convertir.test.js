@@ -164,3 +164,13 @@ test('partes por renglón: cada renglón unificado es una parte con el nombre qu
   assert.equal(fila(datos, 'Grado'), undefined);
   assert.deepEqual(compararTotales(m, datos), []);
 });
+
+test('partes por renglón aunque los renglones no coincidan en ningún mes', () => {
+  const m = meses();
+  m[1].renglones = m[1].renglones.map((x) => (x.desc === 'Arriendo' ? { ...x, desc: 'Grado' } : x));
+  const tabla = { ...TABLA, gastos: [...TABLA.gastos,
+    { gasto: 'Arriendo', de: ['Arriendo', 'Grado'], grupo: 'Casa', partesPorRenglon: { Arriendo: 'Mensualidad', Grado: 'Cobro Extra' } }] };
+  const datos = convertir(m, tabla);
+  assert.deepEqual(datos.gastos.filter((g) => g.parteDe === 'Arriendo').map((g) => [g.gasto, ...mesesDe(g).map((x) => x[0])]),
+    [['Mensualidad', 1000, 0], ['Cobro Extra', 0, 1000]]);
+});

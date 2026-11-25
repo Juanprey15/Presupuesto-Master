@@ -23,6 +23,9 @@ function extraerMes(celdas) {
 
   const desde = primera('G', 'Descripción');
   const hasta = primera('G', 'Total Gastos');
+  for (const [fila, texto] of [[desde, 'Descripción'], [hasta, 'Total Gastos']]) {
+    if (!Number.isFinite(fila)) throw new Error(`La pestaña no tiene "${texto}" en la columna G.`);
+  }
   const renglones = [];
   let grupo = '';
   for (let i = desde + 1; i < hasta; i++) {

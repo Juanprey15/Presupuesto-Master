@@ -89,3 +89,8 @@ test('extraerMes lee tasa, renglones con su grupo, desgloses, ingresos y totales
     totales: { presupuesto: 1200000, pagado: 900000, ingreso: 450000 },
   });
 });
+
+test('extraerMes rechaza una pestaña sin la tabla de gastos', () => {
+  assert.throws(() => extraerMes({ G5: { valor: 'Descripción', formula: '' } }), /Total Gastos/);
+  assert.throws(() => extraerMes({ G9: { valor: 'Total Gastos', formula: '' } }), /Descripción/);
+});

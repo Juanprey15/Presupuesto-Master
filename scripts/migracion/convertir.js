@@ -87,7 +87,7 @@ function convertir(meses, tabla) {
   for (const e of especificaciones(meses, tabla)) {
     const porMes = meses.map((m) => m.renglones.filter((r) => e.de.includes(r.desc)));
     const ultimo = porMes.flat().pop();
-    const conPartes = Boolean(e.desglose) || porMes.some((rs) => rs.length > 1);
+    const conPartes = Boolean(e.desglose || e.partesPorRenglon) || porMes.some((rs) => rs.length > 1);
     const base = { gasto: e.gasto, grupo: grupoDe(e, ultimo), parteDe: '', tipo: ultimo.tipo, comportamiento: e.comportamiento || 'fijo' };
     const pagados = (rs) => (rs.some((r) => r.pagado !== null) ? sumar(rs.map((r) => r.pagado || 0)) : null);
     if (!conPartes) {
