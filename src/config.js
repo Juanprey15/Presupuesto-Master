@@ -1,6 +1,6 @@
 /** Constantes de la plantilla: versión, pestañas, grillas, defectos y paleta. */
 const CONFIG = {
-  VERSION: '2.0.0-dev',
+  VERSION: '2.0.0',
   HOJAS: {
     inicio: 'Inicio',
     panel: 'Panel',
