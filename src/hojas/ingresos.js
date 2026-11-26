@@ -48,6 +48,7 @@ function disenoIngresos(datos) {
   const { ano, mesInicio } = (datos ? datos.config : CONFIG.DEFECTOS).general;
   return {
     encabezados: Object.values(CONFIG.COLUMNAS.ingresos),
+    separador: CONFIG.PALETA.primary,
     filas,
     celdas,
     validaciones: [{ columna: 2, lista: 'ListaPersonas' }, { columna: 3, lista: 'ListaMonedas' }],

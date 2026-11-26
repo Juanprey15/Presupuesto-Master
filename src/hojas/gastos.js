@@ -52,6 +52,7 @@ function disenoGastos(datos) {
   }
   return {
     encabezados: Object.values(CONFIG.COLUMNAS.gastos),
+    separador: CONFIG.PALETA.surface,
     filas,
     celdas,
     validaciones: [
