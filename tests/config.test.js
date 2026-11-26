@@ -28,7 +28,7 @@ test('dimensiones de las grillas y defectos', () => {
     [12, 3, 200, 20, 0.1]);
   assert.equal(CONFIG.DEFECTOS.general.copiar, true);
   assert.equal(CONFIG.DEFECTOS.general.mesInicio, 1);
-  assert.deepEqual(Object.values(CONFIG.COLUMNAS.gastos), ['Gasto', 'Grupo', 'Parte de', 'Tipo', 'Comportamiento', 'Persona', 'Pago']);
+  assert.deepEqual(Object.values(CONFIG.COLUMNAS.gastos), ['Gasto', 'Pago', 'Grupo', 'Parte de', 'Tipo', 'Comportamiento', 'Persona', 'Forma de pago']);
   assert.deepEqual(Object.values(CONFIG.COLUMNAS.ingresos), ['Fuente', 'Persona', 'Moneda']);
   assert.deepEqual(Object.values(CONFIG.COLUMNAS.cambios), ['Mes del ingreso', 'Fecha', 'Dólares', 'Tasa', 'En pesos']);
 });
@@ -38,4 +38,11 @@ test('la paleta es Juan Basic más el color de alerta del boceto', () => {
     ground: '#E8E8E3', surface: '#FFFFFF', ink: '#23262A', muted: '#565C61',
     primary: '#3F5566', accent: '#6F7F3A', deep: '#222C33', line: '#D2D3CC', warn: '#8A4B12',
   });
+});
+
+test('la paleta de formas de pago tiene 8 tonos con nombres distintos', () => {
+  const nombres = CONFIG.PALETA_PAGO.map(([nombre]) => nombre);
+  assert.deepEqual([...nombres], ['Musgo', 'Pizarra', 'Arena', 'Malva', 'Cielo', 'Durazno', 'Salvia', 'Gris']);
+  assert.ok(CONFIG.PALETA_PAGO.every(([, hex]) => /^#[0-9A-F]{6}$/.test(hex)));
+  assert.equal(CONFIG.SIN_COLOR, 'Sin color');
 });

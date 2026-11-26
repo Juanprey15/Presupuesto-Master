@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { cargar } = require('./cargar');
 
-const ctx = cargar('config.js', 'ejemplo.js', 'hojas/grilla.js', 'hojas/configuracion.js', 'hojas/listas.js', 'hojas/panel.js');
+const ctx = cargar('config.js', 'ejemplo.js', 'hojas/grilla.js', 'hojas/gastos.js', 'hojas/configuracion.js', 'hojas/listas.js', 'hojas/panel.js');
 const { disenoConfiguracion, formulasListas, disenoPanel } =
   vm.runInContext('({ disenoConfiguracion, formulasListas, disenoPanel })', ctx);
 
@@ -111,4 +111,12 @@ test('recuadro de ingresos: diferencia siempre, tasas solo con segunda moneda', 
 
 test('por persona cambia a lo planeado si el mes no tiene ingresos reales', () => {
   assert.ok(formulaDe('PanelPersonas').includes('INDEX(PanelIngresosCalc,3)'));
+});
+
+test('el Panel lee Gastos con las columnas corridas por la columna Pago', () => {
+  const l = vm.runInContext('letGastos(0)', ctx);
+  for (const x of ['nm,Gastos!$A$3:$A', 'gr,Gastos!$C$3:$C', 'pd,Gastos!$D$3:$D', 'tp,Gastos!$E$3:$E', 'cm,Gastos!$F$3:$F',
+    'pe,Gastos!$G$3:$G', 'pg,Gastos!$H$3:$H', 'INDEX(Gastos!$I$3:$AF,0,2*i+1)', 'INDEX(Gastos!$I$3:$AF,0,2*i+2)']) {
+    assert.ok(l.includes(x), x);
+  }
 });
